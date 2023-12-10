@@ -18,9 +18,9 @@ cbuffer CamData : register(b0)
 VS_OUTPUT VS_Main(VS_INPUT input)
 {
     VS_OUTPUT output;
-    float4 pos = mul(input.Position, ViewProjectionMatrix);
-    output.Position = float4(pos.x, pos.y, pos.z, 1.0);
-    //output.Position = float4(input.Position.x, input.Position.y, 1.0, 1.0);
+    
+    output.Position = mul(ViewProjectionMatrix, float4(input.Position, 1.0));
+  
     output.Color = input.Color;
     return output;
 }

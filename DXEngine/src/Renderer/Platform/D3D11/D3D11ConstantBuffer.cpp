@@ -40,6 +40,12 @@ void D3D11ConstantBuffer::SetData(const void* data, uint32_t size)
 	m_Data = &data;
 	m_Size = size;
 
+	if (!data)
+	{
+		printf("ConstantBuffer: There is no data to write\n");
+		return;
+	}
+
 	D3D11_MAPPED_SUBRESOURCE msr;
 	memset(&msr, 0, sizeof(D3D11_MAPPED_SUBRESOURCE));
 

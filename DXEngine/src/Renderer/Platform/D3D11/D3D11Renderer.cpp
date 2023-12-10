@@ -42,8 +42,8 @@ void D3D11Renderer::UseDepthTesting(bool enable)
 	{
 		D3D11_DEPTH_STENCIL_DESC desc;
 		desc.DepthEnable = false;
-		desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-		desc.DepthFunc = D3D11_COMPARISON_ALWAYS;
+		desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+		desc.DepthFunc = D3D11_COMPARISON_LESS;
 		desc.StencilEnable = true;
 		desc.StencilReadMask = 0xff;
 		desc.StencilWriteMask = 0xff;

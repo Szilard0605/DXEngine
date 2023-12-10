@@ -13,6 +13,6 @@ public:
 
 	static void Init(Renderer* renderer);
 
-	static void DrawQuad(const glm::vec3& Position, const glm::vec3& size, float rotation, const glm::vec4& color, Shader* shader, PerspectiveCamera& camera);
+	static void DrawQuad(const glm::vec3& Position, const glm::vec3& size, float rotation, const glm::vec4& color, PerspectiveCamera& camera);
 };
 

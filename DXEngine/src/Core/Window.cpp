@@ -37,24 +37,8 @@ Window::Window(const uint32_t width, const uint32_t height, const std::string& t
 
 	glfwSetWindowSizeCallback(m_window, [](GLFWwindow* window, int width, int height)
 	{
-			WindowProperties* nw = static_cast<WindowProperties*>(glfwGetWindowUserPointer(window));
 
-			nw->width = width;
-			nw->height = height;
-
-			int aspect_width = width;
-			int aspect_height = (int)((float)aspect_width / nw->TargetAspectRatio);
-			if (aspect_height > height)
-			{
-				aspect_height = height;
-				aspect_width = (int)((float)aspect_height * nw->TargetAspectRatio);
-			}
-
-			int vpX = (int)((float)width / 2.0f) - (int)((float)aspect_width / 2.0f);
-			int vpY = (int)((float)height / 2.0f) - (int)((float)aspect_height / 2.0f);
-
-			D3D11Context::Get()->Resize((uint32_t)aspect_width , (uint32_t)aspect_height);
-		});
+	});
 }
 
 Window::~Window()

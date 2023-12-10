@@ -3,25 +3,53 @@
 #include "Core/Application.h"
 #include <ext/matrix_transform.hpp>
 
+#include "Platform/D3D11/D3D11ConstantBuffer.h"
+
+#include "DirectXMath.h"
+using namespace DirectX;
+
+struct CameraBuferData
+{
+	glm::mat4 ViewProjection;
+};
+
 struct QuadVertex
 {
 	glm::vec3 Position;
 	glm::vec4 Color;
 };
 
+struct QuadRenderData
+{
+	Shader* Shader;
+	CameraBuferData CameraData;
+	ConstantBuffer* CameraBuffer;
+};
+
+static QuadRenderData s_QuadRenderData;
+
 void Renderer2D::Init(Renderer* renderer)
 {
-	
+	s_QuadRenderData.Shader = Shader::Create("res/shaders/testshader.hlsl");
 
+	s_QuadRenderData.CameraBuffer = ConstantBuffer::Create(&s_QuadRenderData.CameraData, sizeof(CameraBuferData), 0);
+	s_QuadRenderData.CameraBuffer->SetData(&s_QuadRenderData.CameraData, sizeof(CameraBuferData));
+	
+	s_QuadRenderData.Shader->AddConstantBuffer(s_QuadRenderData.CameraBuffer);
 }
 
-void Renderer2D::DrawQuad(const glm::vec3& Position, const glm::vec3& size, float rotation, const glm::vec4& color, Shader* shader, PerspectiveCamera& camera)
+void Renderer2D::DrawQuad(const glm::vec3& Position, const glm::vec3& size, float rotation, const glm::vec4& color, PerspectiveCamera& camera)
 {
-	shader->Bind();
+	s_QuadRenderData.Shader->Bind();
 
 	camera.CalculateProjection();
 	camera.CalculatePosition();
 	camera.UpdateView();
+
+	//s_QuadRenderData.CameraData.ProjectionMatrix = camera.GetProjectionMatrix();
+	s_QuadRenderData.CameraData.ViewProjection = camera.GetViewProjection();
+	
+	s_QuadRenderData.CameraBuffer->SetData(&s_QuadRenderData.CameraData, sizeof(CameraBuferData));
 
 	Application::GetInstance()->GetRenderer()->UseDepthTesting(false);
 
@@ -32,36 +60,30 @@ void Renderer2D::DrawQuad(const glm::vec3& Position, const glm::vec3& size, floa
 
 	vb->SetLayout({
 		{ ShaderDataType::Float3, "a_position" },
-		{ ShaderDataType::Float4, "a_color" }
+		{ ShaderDataType::Float4, "a_color" },
 	});
 
+	glm::vec4 Positions[4];
+
+	Positions[0] = glm::vec4(-0.5f, -0.5f, 0.0f, 1.0f);
+	Positions[1] = glm::vec4( 0.5f, -0.5f, 0.0f, 1.0f);
+	Positions[2] = glm::vec4( 0.5f,  0.5f, 0.0f, 1.0f);
+	Positions[3] = glm::vec4(-0.5f,  0.5f, 0.0f, 1.0f);
+
 	glm::mat4 model = glm::translate(glm::mat4(1.0f), Position)
-						  * glm::rotate(glm::mat4(1.0f), glm::radians(rotation), { 0.0f, 1.0f, 0.0f })
-						  * glm::scale(glm::mat4(1.0f), glm::vec3(size.x, size.y, 1.0f));
+		* glm::rotate(glm::mat4(1.0f), glm::radians(rotation), { 0.0f, 1.0f, 0.0f })
+		* glm::scale(glm::mat4(1.0f), glm::vec3(size.x, size.y, 1.0f));
 
-	vertices[0].Position = glm::vec3(-0.5f, -0.5f, 1.0f);
-	vertices[1].Position = glm::vec3( 0.5f, -0.5f, 1.0f);
-	vertices[2].Position = glm::vec3( 0.5f,  0.5f, 1.0f);
-	vertices[3].Position = glm::vec3(-0.5f,  0.5f, 1.0f);
-
+	
 	for (int i = 0; i < 4; i++)
 	{
-		vertices[i].Position = model * glm::vec4(vertices[i].Position, 1.0f);
+		vertices[i].Position = model * Positions[i];
 		vertices[i].Color = color;
 	}
 
 	
-
-	struct CamData										
-	{
-		glm::mat4 ViewProjectionMatrix;
-	} CamData;
-
-	CamData.ViewProjectionMatrix = camera.GetViewProjection();
-	
 	// CONSTANT BUFFERS ARE NOT WORKING
-	shader->GetConstantBuffers()[0]->SetData(&CamData, sizeof(CamData));
-
+	
 	vb->SetData(vertices, sizeof(QuadVertex) * 4);
 
 	va->AddVertexBuffer(vb);
@@ -74,7 +96,7 @@ void Renderer2D::DrawQuad(const glm::vec3& Position, const glm::vec3& size, floa
 
 	IndexBuffer* ib = IndexBuffer::Create(indices, 6);
 
-	shader->GetConstantBuffers()[0]->Bind();
+	s_QuadRenderData.CameraBuffer->Bind();
 
 	ib->Bind();
 	va->DrawIndexed(6);

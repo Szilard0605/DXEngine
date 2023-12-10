@@ -70,7 +70,7 @@ D3D11Context::D3D11Context(Window& window)
 		desc.DepthEnable = true; // enable depth testing by default
 		desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
 		desc.DepthFunc = D3D11_COMPARISON_ALWAYS;
-		desc.StencilEnable = false;
+		desc.StencilEnable = true;
 		desc.StencilReadMask = 0xff;
 		desc.StencilWriteMask = 0xff;
 
