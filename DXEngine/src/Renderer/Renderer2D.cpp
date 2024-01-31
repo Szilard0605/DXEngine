@@ -6,6 +6,7 @@
 #include "Platform/D3D11/D3D11ConstantBuffer.h"
 
 #include "DirectXMath.h"
+
 using namespace DirectX;
 
 struct CameraBuferData
@@ -17,6 +18,7 @@ struct QuadVertex
 {
 	glm::vec3 Position;
 	glm::vec4 Color;
+	glm::vec2 TexCoords;
 };
 
 struct QuadRenderData
@@ -38,8 +40,9 @@ void Renderer2D::Init(Renderer* renderer)
 	s_QuadRenderData.Shader->AddConstantBuffer(s_QuadRenderData.CameraBuffer);
 }
 
-void Renderer2D::DrawQuad(const glm::vec3& Position, const glm::vec3& size, float rotation, const glm::vec4& color, PerspectiveCamera& camera)
+void Renderer2D::DrawQuad(const glm::vec3& Position, const glm::vec3& size, float rotation, const glm::vec4& color, Texture2D* texture, PerspectiveCamera & camera)
 {
+	
 	s_QuadRenderData.Shader->Bind();
 
 	camera.CalculateProjection();
@@ -59,8 +62,9 @@ void Renderer2D::DrawQuad(const glm::vec3& Position, const glm::vec3& size, floa
 	VertexArray* va = VertexArray::Create();
 
 	vb->SetLayout({
-		{ ShaderDataType::Float3, "a_position" },
-		{ ShaderDataType::Float4, "a_color" },
+		{ ShaderDataType::Float3, "a_position"  },
+		{ ShaderDataType::Float4, "a_color"	    },
+		{ ShaderDataType::Float2, "a_texcoords" }
 	});
 
 	glm::vec4 Positions[4];
@@ -74,11 +78,13 @@ void Renderer2D::DrawQuad(const glm::vec3& Position, const glm::vec3& size, floa
 		* glm::rotate(glm::mat4(1.0f), glm::radians(rotation), { 0.0f, 1.0f, 0.0f })
 		* glm::scale(glm::mat4(1.0f), glm::vec3(size.x, size.y, 1.0f));
 
-	
+	constexpr glm::vec2 textureCoords[] = { { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f } };
+
 	for (int i = 0; i < 4; i++)
 	{
 		vertices[i].Position = model * Positions[i];
 		vertices[i].Color = color;
+		vertices[i].TexCoords = textureCoords[i];
 	}
 
 	
@@ -99,5 +105,6 @@ void Renderer2D::DrawQuad(const glm::vec3& Position, const glm::vec3& size, floa
 	s_QuadRenderData.CameraBuffer->Bind();
 
 	ib->Bind();
+	texture->Bind(0);
 	va->DrawIndexed(6);
 }

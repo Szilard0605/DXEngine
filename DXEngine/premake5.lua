@@ -6,7 +6,8 @@ project "DXEngine"
 
 	targetdir ("%{wks.location}/bin/" .. outputdir)
 	objdir ("%{wks.location}/bin-int/" .. outputdir)
-
+	debugdir ("%{prj.location}/")
+	
 	files
 	{
 		"**.h",
@@ -25,6 +26,7 @@ project "DXEngine"
 	includedirs
 	{
 		"src",
+		"%{IncludeDir.stb_image}",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.GLM}",
 		"%{IncludeDir.ImGui}"

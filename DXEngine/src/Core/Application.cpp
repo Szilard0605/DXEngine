@@ -11,6 +11,7 @@
 
 #include "imgui.h"
 #include "gtc/type_ptr.hpp"
+#include <Renderer/Platform/D3D11/D3D11Texture2D.h>
 
 
 Application* Application::s_Instance = nullptr;
@@ -42,20 +43,25 @@ void Application::Run()
 {
 	
 	PerspectiveCamera camera(60.0f, 1280.0f / 720.0f, 0.1f, 1000.0f);
+	//camera.SetFOV(60.f);
 	camera.Translate({0, 0, 0});
 	camera.UpdateView();
 
-	glm::vec3 camPos = {0, 0, 0};
-	float fov = 0.0f;
+	glm::vec3 camPos = {0, 0, 5};
+	float fov = 60.0f;
 	float rot = 0.0f;
 	glm::vec3 quadPos = {0, 0, 0};
 	glm::vec4 color = glm::vec4(1);
+
+	Texture2D* tex = Texture2D::Create("res/textures/test.jpg");
 
 	while (!m_Window->ShouldClose())
 	{
 		m_Window->Update();
 
-		Renderer2D::DrawQuad(quadPos, { 1.0f, 1.0f, 1.0f }, rot, color, camera);
+		Renderer2D::DrawQuad(quadPos, { 1.0f, 1.0f, 1.0f }, rot, color, tex, camera);
+
+		//Renderer2D::DrawQuad({0, 0, 0.0f}, { 1.0f, 1.0f, 1.0f }, rot, color, camera);
 
 		{
 			ImGuiCore::NewFrame();
