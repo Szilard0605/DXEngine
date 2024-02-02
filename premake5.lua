@@ -16,6 +16,7 @@ workspace "DXEngine"
 
 group "Dependencies" 
 	include "Dependencies/imgui"
+	include "Dependencies/assimp"
 group ""
 
 include "DXEngine"

@@ -6,3 +6,5 @@
 #include "IndexBuffer.h"
 #include "VertexArray.h"
 #include "VertexBuffer.h"
+#include "ConstantBuffer.h"
+#include "Texture2D.h"

@@ -26,6 +26,7 @@ project "DXEngine"
 	includedirs
 	{
 		"src",
+		"%{IncludeDir.ASSIMP}",
 		"%{IncludeDir.stb_image}",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.GLM}",
@@ -40,6 +41,7 @@ project "DXEngine"
 	links
 	{
 		"ImGui",
+		"Assimp",
 		"glfw3_64.lib",
 		"d3d11.lib",
 		"d3dcompiler.lib",

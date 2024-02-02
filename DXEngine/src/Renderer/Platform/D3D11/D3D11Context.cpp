@@ -67,9 +67,9 @@ D3D11Context::D3D11Context(Window& window)
 	//Depth Stencil State 
 	{
 		D3D11_DEPTH_STENCIL_DESC desc;
-		desc.DepthEnable = true; // enable depth testing by default
-		desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-		desc.DepthFunc = D3D11_COMPARISON_ALWAYS;
+		desc.DepthEnable = true;
+		desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+		desc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
 		desc.StencilEnable = true;
 		desc.StencilReadMask = 0xff;
 		desc.StencilWriteMask = 0xff;
@@ -92,10 +92,16 @@ D3D11Context::D3D11Context(Window& window)
 
 	// Rasterizer
 	D3D11_RASTERIZER_DESC rasterDesc = {};
-	rasterDesc.FillMode = D3D11_FILL_SOLID;
-	rasterDesc.CullMode = D3D11_CULL_BACK;
+	rasterDesc.AntialiasedLineEnable = false;
+	rasterDesc.CullMode = D3D11_CULL_NONE;
+	rasterDesc.DepthBias = 0;
+	rasterDesc.DepthBiasClamp = 0.0f;
 	rasterDesc.DepthClipEnable = true;
+	rasterDesc.FillMode = D3D11_FILL_SOLID;
 	rasterDesc.FrontCounterClockwise = true;
+	rasterDesc.MultisampleEnable = false;
+	rasterDesc.ScissorEnable = false;
+	rasterDesc.SlopeScaledDepthBias = 0.0f;
 
 	m_Device->CreateRasterizerState(&rasterDesc, &m_RasterizerState);
 	m_DeviceContext->RSSetState(m_RasterizerState);
@@ -183,6 +189,7 @@ void D3D11Context::Resize(uint32_t width, uint32_t height)
 	depthStencilDesc.MipLevels = 1;
 	depthStencilDesc.ArraySize = 1;
 	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+
 	depthStencilDesc.SampleDesc.Count = 1;
 	depthStencilDesc.SampleDesc.Quality = 0;
 	depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;

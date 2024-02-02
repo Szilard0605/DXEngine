@@ -1,28 +1,30 @@
 struct VS_INPUT
 {
     float3 Position : a_position;
-    float4 Color : a_color;
+    //float4 Color : a_color;
     float2 TexCoords : a_texcoords;
 };
 
 struct VS_OUTPUT
 {
     float4 Position : SV_POSITION;
-    float4 Color : a_color;
+    //float4 Color : a_color;
     float2 TexCoords : a_texcoords;
 };
 
-cbuffer CamData : register(b0)
+cbuffer RenderData : register(b0)
 {
     float4x4 ViewProjectionMatrix;
+    float4x4 Transform;
 };
 
 VS_OUTPUT VS_Main(VS_INPUT input)
 {
     VS_OUTPUT output;
     
-    output.Position = mul(ViewProjectionMatrix, float4(input.Position, 1.0));
-    output.Color = input.Color;
+    const float4 ViewPos = mul(Transform, float4(input.Position, 1.0));
+    output.Position = mul(ViewProjectionMatrix, ViewPos);
+    //output.Color = input.Color;
     output.TexCoords = input.TexCoords;
     return output;
 }
@@ -34,5 +36,5 @@ SamplerState mySampler : register(s0); // Declare the sampler variable (register
 float4 PS_Main(VS_OUTPUT input) : SV_Target
 {
     float4 texColor = myTexture.Sample(mySampler, input.TexCoords);
-    return input.Color * texColor;
+    return texColor;
 }

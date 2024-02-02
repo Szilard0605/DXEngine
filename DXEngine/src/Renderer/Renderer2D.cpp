@@ -54,8 +54,6 @@ void Renderer2D::DrawQuad(const glm::vec3& Position, const glm::vec3& size, floa
 	
 	s_QuadRenderData.CameraBuffer->SetData(&s_QuadRenderData.CameraData, sizeof(CameraBuferData));
 
-	Application::GetInstance()->GetRenderer()->UseDepthTesting(false);
-
 	QuadVertex vertices[4];
 
 	VertexBuffer* vb = VertexBuffer::Create(VertexBuffer::BufferUsage::DYNAMIC);

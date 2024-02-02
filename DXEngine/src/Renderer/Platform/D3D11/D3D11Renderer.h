@@ -17,7 +17,6 @@ public:
 	virtual void Clear(const glm::vec4& color) override;
 	virtual void Resize(const float width, const float height) override;
 	virtual void Present() override;
-	virtual void UseDepthTesting(bool enable) override;
 	virtual void BindViewport() override;
 
 private:

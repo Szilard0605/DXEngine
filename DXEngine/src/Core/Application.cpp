@@ -12,6 +12,7 @@
 #include "imgui.h"
 #include "gtc/type_ptr.hpp"
 #include <Renderer/Platform/D3D11/D3D11Texture2D.h>
+#include <Renderer/Mesh.h>
 
 
 Application* Application::s_Instance = nullptr;
@@ -49,19 +50,27 @@ void Application::Run()
 
 	glm::vec3 camPos = {0, 0, 5};
 	float fov = 60.0f;
-	float rot = 0.0f;
+	glm::vec3 rot = glm::vec3( 0.0f );
 	glm::vec3 quadPos = {0, 0, 0};
 	glm::vec4 color = glm::vec4(1);
+	glm::vec3 quadSize = glm::vec3(1);
 
 	Texture2D* tex = Texture2D::Create("res/textures/test.jpg");
+
+	std::vector<Mesh*> meshes = Mesh::Import("res/models/medieval_civilian_3/scene.gltf");
 
 	while (!m_Window->ShouldClose())
 	{
 		m_Window->Update();
 
-		Renderer2D::DrawQuad(quadPos, { 1.0f, 1.0f, 1.0f }, rot, color, tex, camera);
+		//Renderer2D::DrawQuad(quadPos, { 1.0f, 1.0f, 1.0f }, rot, color, tex, camera);
 
 		//Renderer2D::DrawQuad({0, 0, 0.0f}, { 1.0f, 1.0f, 1.0f }, rot, color, camera);
+
+		for (int i = 0; i < meshes.size(); i++)
+		{
+			meshes[i]->Render(camera, quadPos, quadSize, rot);
+		}
 
 		{
 			ImGuiCore::NewFrame();
@@ -69,8 +78,9 @@ void Application::Run()
 
 			ImGui::DragFloat3("camPos", glm::value_ptr(camPos));
 			ImGui::DragFloat("FOV", &fov);
-			ImGui::DragFloat3("quadPos", glm::value_ptr(quadPos));	
-			ImGui::DragFloat("rotation", &rot);
+			ImGui::DragFloat3("quadPos", glm::value_ptr(quadPos));
+			ImGui::DragFloat3("quadSize", glm::value_ptr(quadSize));
+			ImGui::DragFloat3("rotation", glm::value_ptr(rot));
 			ImGui::ColorEdit4("quadCol", glm::value_ptr(color));
 
 			ImGui::End();

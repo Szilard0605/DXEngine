@@ -17,7 +17,6 @@ public:
 	virtual void Clear(const glm::vec4& color) = 0;
 	virtual void Resize(const float width, const float height) = 0;
 	virtual void Present() = 0;
-	virtual void UseDepthTesting(bool enable) = 0;
 	virtual void BindViewport() = 0;
 
 	static API GetAPI() { return s_API; }
