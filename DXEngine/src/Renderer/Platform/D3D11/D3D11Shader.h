@@ -7,10 +7,12 @@
 #include <stdint.h>
 #include <vector>
 
+#include "Utils/Utils.h"
+
 #include "Renderer/API/Shader.h"
 #include "Renderer/API/ConstantBuffer.h"
 
-class D3D11Shader : public Shader
+class D3D11Shader : public Shader, public std::enable_shared_from_this<D3D11Shader>
 {
 public:
 	D3D11Shader(const std::string& path);
@@ -20,7 +22,7 @@ public:
 	virtual void Bind() override;
 	virtual void Unbind() override;
 	
-	static D3D11Shader* GetCurrentlyBound() { return s_CurrentlyBoundShader; }
+	static SharedPtr<D3D11Shader> GetCurrentlyBound() { return s_CurrentlyBoundShader; }
 	 
 	virtual void AddConstantBuffer(ConstantBuffer* buffer) override;
 	virtual std::vector<ConstantBuffer*> GetConstantBuffers() override { return m_ConstantBuffers; }
@@ -41,7 +43,7 @@ public:
 	ShaderData* GetShaderData() { return &m_Data; }
 
 private:
-	static D3D11Shader* s_CurrentlyBoundShader;
+	static SharedPtr<D3D11Shader> s_CurrentlyBoundShader;
 
 	std::vector<ConstantBuffer*> m_ConstantBuffers;
 

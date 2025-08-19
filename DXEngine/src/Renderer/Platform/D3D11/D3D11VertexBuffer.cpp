@@ -95,7 +95,7 @@ void D3D11VertexBuffer::SetLayout(BufferLayout layout)
 	}
 
 	D3D11Context* context = D3D11Context::Get();
-	D3D11Shader* shader = D3D11Shader::GetCurrentlyBound();
+	SharedPtr<D3D11Shader> shader = D3D11Shader::GetCurrentlyBound();
 	
 	ID3D11Device* device = context->GetDevice();
 	HRESULT result = device->CreateInputLayout(desc, layoutSize, shader->GetShaderData()->vsBlob->GetBufferPointer(), shader->GetShaderData()->vsBlob->GetBufferSize(), &m_InputLayout);

@@ -2,13 +2,14 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "ConstantBuffer.h"
 
 class Shader
 {
 public:
-	static Shader* Create(const std::string& path);
+	static std::shared_ptr<Shader> Create(const std::string& path);
 
 	//ID3DBlob* Compile(const std::string& source, const std::string& main, const std::string& target);
 	virtual void Bind() = 0;

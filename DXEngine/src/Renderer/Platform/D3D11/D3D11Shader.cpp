@@ -8,7 +8,7 @@
 
 #include <system_error>
 
-D3D11Shader* D3D11Shader::s_CurrentlyBoundShader = nullptr;
+SharedPtr<D3D11Shader> D3D11Shader::s_CurrentlyBoundShader = nullptr;
 
 D3D11Shader::D3D11Shader(const std::string& path)
 	: m_FilePath(path)
@@ -87,7 +87,7 @@ ID3DBlob* D3D11Shader::Compile(const std::string& source, const std::string& mai
 
 void D3D11Shader::Bind()
 {
-	s_CurrentlyBoundShader = this;
+	s_CurrentlyBoundShader = shared_from_this();
 
 	m_Context->GetDeviceContext()->VSSetShader(m_Data.m_VertexShader, NULL, 0);
 	m_Context->GetDeviceContext()->PSSetShader(m_Data.m_PixelShader, NULL, 0);

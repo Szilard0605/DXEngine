@@ -4,6 +4,8 @@
 
 #include "Core/Window.h"
 
+#include "Utils/Utils.h"
+
 class Renderer
 {
 public:
@@ -12,7 +14,7 @@ public:
 		None, D3D11
 	};
 
-	static Renderer* Create(Window& window);
+	static SharedPtr<Renderer> Create(Window& window);
 
 	virtual void Clear(const glm::vec4& color) = 0;
 	virtual void Resize(const float width, const float height) = 0;

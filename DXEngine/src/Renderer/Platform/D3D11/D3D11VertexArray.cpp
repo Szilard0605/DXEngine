@@ -3,7 +3,7 @@
 
 #include <d3d11.h>
 
-D3D11VertexArray::D3D11VertexArray(VertexBuffer* vbuffer)
+D3D11VertexArray::D3D11VertexArray(SharedPtr<VertexBuffer> vbuffer)
 {
 	m_Buffers.push_back(vbuffer);
 }
@@ -12,7 +12,7 @@ D3D11VertexArray::~D3D11VertexArray()
 {
 }
 
-void D3D11VertexArray::AddVertexBuffer(VertexBuffer* vbuffer)
+void D3D11VertexArray::AddVertexBuffer(SharedPtr<VertexBuffer> vbuffer)
 {
 	m_Buffers.push_back(vbuffer);
 }

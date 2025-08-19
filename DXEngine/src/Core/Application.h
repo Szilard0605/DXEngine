@@ -9,6 +9,7 @@
 
 #include "Renderer/API/API.h"
 
+#include "Utils/Utils.h"
 
 class Application
 {
@@ -20,12 +21,12 @@ public:
 
 	static Application* GetInstance() { return s_Instance; }
 
-	Renderer* GetRenderer() { return m_Renderer; }
+	SharedPtr<Renderer> GetRenderer() { return m_Renderer; }
 
 	Window* GetWindow() { return m_Window; }
 private:
 	static Application* s_Instance;
 	Window* m_Window;
-	Renderer* m_Renderer;
+	SharedPtr<Renderer> m_Renderer;
 };
 

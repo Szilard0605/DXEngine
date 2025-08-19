@@ -2,10 +2,12 @@
 
 #include <stdint.h>
 
+#include "Utils/Utils.h"
+
 class IndexBuffer
 {
 public:
-	static IndexBuffer* Create(uint32_t* data, uint32_t count);
+	static SharedPtr<IndexBuffer> Create(uint32_t* data, uint32_t count);
 
 	virtual void Bind() = 0;
 	virtual void Unbind() = 0;

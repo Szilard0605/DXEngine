@@ -2,12 +2,16 @@
 
 #include "glm.hpp"
 #include <vector>
-#include "Renderer/API/API.h"
-#include "Renderer/Camera/PerspectiveCamera.h"
-
 #include <filesystem>
 
-struct Vertex
+#include "Utils/Utils.h"
+#include "Renderer/API/API.h"
+#include "Renderer/Camera/PerspectiveCamera.h"
+#include "Math/Transform.h"
+
+#include "PBRMaterial.h"
+
+struct StaticMeshVertex
 {
 	glm::vec3 Position;
 	/*glm::vec3 Normal;
@@ -20,36 +24,42 @@ struct Material
 {
 	glm::vec3 BaseColor = glm::vec3{1};
 	Texture2D* Texture = nullptr;
-	Shader* Shader = nullptr;
+	SharedPtr<Shader> Shader = nullptr;
 };
 
 class Mesh
 {
 public:
-
-
-
 	Mesh() = default;
-	//Mesh(GLVertexArray& vertexarray, GLIndexBuffer& indexbuffer, Material& material);
-	Mesh(std::vector<Vertex> vertices, std::vector<uint32_t> indices, Material material);
-	//Mesh(Vertex vertex, uint32_t* indices, Material& material);
-
-	static std::vector<Mesh*> Import(std::filesystem::path path);
-
-
+	Mesh(std::vector<StaticMeshVertex> vertices, std::vector<uint32_t> indices, PBRMaterial& material);
 	~Mesh();
 
-	void Render(PerspectiveCamera& camera, glm::vec3 Position, glm::vec3 Scale, glm::vec3 Rotation);
+	static std::vector<Mesh> ImportDynamicMesh(std::filesystem::path path);
+	static Mesh ImportStaticMesh(std::filesystem::path path);
 
-	VertexArray* GetVertexArray() { return m_VertexArray; }
-	Material* GetMaterial() { return m_Material; }
-	void SetMaterial(Material* material) { m_Material = material; }
+	void SetTransform(Math::Transform transform) { m_Transform = transform; }
+	Math::Transform& GetTransform() { return m_Transform; }
+
+	void Render(PerspectiveCamera& camera);
+
+	PBRMaterial& GetMaterial() { return m_Material; }
+	void SetMaterial(PBRMaterial& material) { m_Material = material; }
+
+	std::vector<StaticMeshVertex>& GetVertices()  { return m_Vertices; }
+	std::vector<uint32_t>&		   GetIndices()   { return m_Indices;  }
+
+	SharedPtr<VertexArray>    GetVertexArray()		{ return m_VertexArray;		 }
+	SharedPtr<VertexBuffer>   GetVertexBuffer()		{ return m_VertexBuffer;	 }
+	SharedPtr<IndexBuffer>    GetIndexBuffer()		{ return m_IndexBuffer;		 }
+	SharedPtr<ConstantBuffer> GetRenderDataBuffer() { return m_RenderDataBuffer; }
 
 private:
-	VertexArray* m_VertexArray;
-	IndexBuffer* m_IndexBuffer;
-	VertexBuffer* m_VertexBuffer;
-	ConstantBuffer* m_RenderDataBuffer;
+	Math::Transform m_Transform;
+
+	SharedPtr<VertexArray>    m_VertexArray      = nullptr;
+	SharedPtr<IndexBuffer>    m_IndexBuffer      = nullptr;
+	SharedPtr<VertexBuffer>   m_VertexBuffer     = nullptr;
+	SharedPtr<ConstantBuffer> m_RenderDataBuffer = nullptr;
 
 	struct RenderData
 	{
@@ -57,8 +67,8 @@ private:
 		glm::mat4 MeshTransform;
 	} m_RenderData;
 
-	Material* m_Material;
+	PBRMaterial m_Material;
 
-	std::vector<Vertex> m_Vertices;
+	std::vector<StaticMeshVertex> m_Vertices;
 	std::vector<uint32_t> m_Indices;
 };

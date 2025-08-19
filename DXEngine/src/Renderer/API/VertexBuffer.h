@@ -4,6 +4,8 @@
 
 #include "Renderer/API/BufferLayout.h"
 
+#include "Utils/Utils.h"
+
 class VertexBuffer
 {
 	public:
@@ -13,7 +15,7 @@ class VertexBuffer
 			DYNAMIC
 		};
 
-		static VertexBuffer* Create(BufferUsage usage);
+		static SharedPtr<VertexBuffer> Create(BufferUsage usage);
 
 		virtual void Bind() = 0;
 		virtual void Unbind() = 0;
