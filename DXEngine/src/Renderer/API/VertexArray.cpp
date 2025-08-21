@@ -2,7 +2,7 @@
 
 #include "Renderer.h"
 
-#include "Renderer/Platform/D3D11/D3D11VertexArray.h"
+#include "Renderer/Backend/D3D11/D3D11VertexArray.h"
 
 SharedPtr<VertexArray> VertexArray::Create()
 {

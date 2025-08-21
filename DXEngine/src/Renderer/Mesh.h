@@ -11,6 +11,8 @@
 
 #include "PBRMaterial.h"
 
+#include <iostream>
+
 struct StaticMeshVertex
 {
 	glm::vec3 Position;
@@ -34,7 +36,7 @@ public:
 	Mesh(std::vector<StaticMeshVertex> vertices, std::vector<uint32_t> indices, PBRMaterial& material);
 	~Mesh();
 
-	static std::vector<Mesh> ImportDynamicMesh(std::filesystem::path path);
+	static std::vector<SharedPtr<Mesh>> ImportDynamicMesh(std::filesystem::path path);
 	static Mesh ImportStaticMesh(std::filesystem::path path);
 
 	void SetTransform(Math::Transform transform) { m_Transform = transform; }

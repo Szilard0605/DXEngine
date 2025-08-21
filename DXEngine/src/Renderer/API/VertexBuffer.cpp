@@ -1,7 +1,7 @@
 #include "VertexBuffer.h"
 
 #include "Renderer.h"
-#include "Renderer/Platform/D3D11/D3D11VertexBuffer.h"
+#include "Renderer/Backend/D3D11/D3D11VertexBuffer.h"
 
 SharedPtr<VertexBuffer> VertexBuffer::Create(BufferUsage usage)
 {

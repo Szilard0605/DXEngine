@@ -1,7 +1,7 @@
 #include "Texture2D.h"
 #include "Renderer.h"
 
-#include "Renderer/Platform/D3D11/D3D11Texture2D.h"
+#include "Renderer/Backend/D3D11/D3D11Texture2D.h"
 
 SharedPtr<Texture2D> Texture2D::Create(std::filesystem::path path)
 {

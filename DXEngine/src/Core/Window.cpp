@@ -1,12 +1,16 @@
 #include "Window.h"
-#include "Renderer/Platform/D3D11/D3D11Context.h"
+
+#include "Renderer/Backend/D3D11/D3D11Context.h"
 
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <glfw3native.h>
 
+#include "Application.h"
+
 Window::Window(WindowProperties properties)
+	: Window(properties.width, properties.height, properties.title)
 {
-	Window(properties.width, properties.height, properties.title);
+	
 }
 
 Window::Window(const uint32_t width, const uint32_t height, const std::string& title)
@@ -23,7 +27,7 @@ Window::Window(const uint32_t width, const uint32_t height, const std::string& t
 
 	m_window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
 
-	glfwSetWindowUserPointer(m_window, &m_Properties);
+	glfwSetWindowUserPointer(m_window, this);
 
 	if (!m_window)
 	{
@@ -34,11 +38,11 @@ Window::Window(const uint32_t width, const uint32_t height, const std::string& t
 
 	m_Properties.TargetAspectRatio = (float)m_Properties.width / (float)m_Properties.height;
 
-
-	glfwSetWindowSizeCallback(m_window, [](GLFWwindow* window, int width, int height)
+	glfwSetWindowSizeCallback(m_window, [](GLFWwindow* window, int w, int h)
 	{
-
+		Application::GetInstance()->OnWindowResize(w, h);
 	});
+
 }
 
 Window::~Window()
@@ -66,3 +70,4 @@ bool Window::ShouldClose()
 {
 	return glfwWindowShouldClose(m_window);
 }
+

@@ -15,8 +15,6 @@ public:
 	virtual void Present() override;
 	virtual void Resize(uint32_t width, uint32_t height) override;
 
-	void BindRenderTargets();
-
 	ID3D11Device* GetDevice() { return m_Device; }
 	ID3D11DeviceContext* GetDeviceContext() { return m_DeviceContext; }
 	ID3D11RenderTargetView* GetRenderTargetView() { return m_RenderTargetView; }
@@ -25,7 +23,7 @@ public:
 	ID3D11DepthStencilState* GetDepthStencilState() { return m_DepthStencilState; }
 	ID3D11DepthStencilView* GetDepthStencilView() { return m_DepthStencilView; }
 
-	void ResizeSwapChain(float x, float y, float width, float height);
+	void BindViewport();
 	D3D11_VIEWPORT* GetViewport() { return &m_ViewPort; }
 
 	ID3D11RasterizerState* GetRasterizerState() { return m_RasterizerState; }

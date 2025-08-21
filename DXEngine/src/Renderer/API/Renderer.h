@@ -2,8 +2,9 @@
 
 #include "glm.hpp"
 
-#include "Core/Window.h"
+#include "RenderTarget.h"
 
+#include "Core/Window.h"
 #include "Utils/Utils.h"
 
 class Renderer
@@ -18,7 +19,8 @@ public:
 
 	virtual void Clear(const glm::vec4& color) = 0;
 	virtual void Resize(const float width, const float height) = 0;
-	virtual void Present() = 0;
+	virtual void BindBackBuffer() = 0;
+	virtual void Present(SharedPtr<RenderTarget> renderTarget = nullptr) = 0;
 	virtual void BindViewport() = 0;
 
 	static API GetAPI() { return s_API; }

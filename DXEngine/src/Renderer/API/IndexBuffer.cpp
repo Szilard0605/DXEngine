@@ -2,7 +2,7 @@
 
 #include "Renderer.h"
 
-#include "Renderer/Platform/D3D11/D3D11IndexBuffer.h"
+#include "Renderer/Backend/D3D11/D3D11IndexBuffer.h"
 
 SharedPtr<IndexBuffer> IndexBuffer::Create(uint32_t* data, uint32_t count)
 {

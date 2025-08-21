@@ -24,7 +24,6 @@ void D3D11VertexArray::DrawIndexed(uint32_t count)
 	for (uint32_t i = 0; i < m_Buffers.size(); i++)
 	{
 		D3D11Context::Get()->GetDeviceContext()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		D3D11Context::Get()->BindRenderTargets();
 
 		m_Buffers[i]->Bind();
 		D3D11Context::Get()->GetDeviceContext()->DrawIndexed(count, 0, 0);

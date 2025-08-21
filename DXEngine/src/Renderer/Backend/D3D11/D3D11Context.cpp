@@ -87,8 +87,8 @@ D3D11Context::D3D11Context(Window& window)
 		m_Device->CreateDepthStencilState(&desc, &m_DepthStencilState);
 	}
 
-	//m_Device->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(&m_DebugLayer));
-	//m_DebugLayer->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+	m_Device->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(&m_DebugLayer));
+	m_DebugLayer->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
 
 	// Rasterizer
 	D3D11_RASTERIZER_DESC rasterDesc = {};
@@ -107,25 +107,6 @@ D3D11Context::D3D11Context(Window& window)
 	m_DeviceContext->RSSetState(m_RasterizerState);
 	m_RasterizerState->Release();
 
-	ID3D11Texture2D* backBuffer;
-	hr = m_SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
-
-	if (FAILED(hr))
-	{
-		printf("Failed to get the back buffer from swapchain\n");
-		return;
-	}
-
-	hr = m_Device->CreateRenderTargetView(backBuffer, NULL, &m_RenderTargetView);
-
-	backBuffer->Release();
-
-	if (FAILED(hr))
-	{
-		printf("Failed to create RenderTargetView\n");
-		return;
-	}
-	
 	Resize(window.GetProperties().width, window.GetProperties().height);
 }
 
@@ -133,7 +114,6 @@ D3D11Context::~D3D11Context()
 {
 	ReleaseCom(m_Device);
 	ReleaseCom(m_DeviceContext);
-	ReleaseCom(m_RenderTargetView);
 	ReleaseCom(m_SwapChain)
 	ReleaseCom(m_RenderTargetView);
 	ReleaseCom(m_DepthStencilBuffer);
@@ -149,7 +129,7 @@ void D3D11Context::Resize(uint32_t width, uint32_t height)
 	m_DeviceContext->Flush();
 
 	HRESULT hr = m_SwapChain->ResizeBuffers(3, width, height, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
-	
+
 	ID3D11Texture2D* backBuffer;
 	hr = m_SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBuffer);
 
@@ -170,8 +150,8 @@ void D3D11Context::Resize(uint32_t width, uint32_t height)
 		return;
 	}
 
-	m_ViewPort.TopLeftX = (m_Window.GetProperties().width - width);
-	m_ViewPort.TopLeftY = (m_Window.GetProperties().height - height);
+	m_ViewPort.TopLeftX = 0;
+	m_ViewPort.TopLeftY = 0;
 
 
 	printf("windowWidth: %d, windowHeight: %d\n", m_Window.GetProperties().width, m_Window.GetProperties().height);
@@ -189,7 +169,6 @@ void D3D11Context::Resize(uint32_t width, uint32_t height)
 	depthStencilDesc.MipLevels = 1;
 	depthStencilDesc.ArraySize = 1;
 	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-
 	depthStencilDesc.SampleDesc.Count = 1;
 	depthStencilDesc.SampleDesc.Quality = 0;
 	depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -201,8 +180,6 @@ void D3D11Context::Resize(uint32_t width, uint32_t height)
 
 	if (m_DepthStencilBuffer)
 		hr = m_Device->CreateDepthStencilView(m_DepthStencilBuffer, 0, &m_DepthStencilView);
-
-	BindRenderTargets();
 
 	if (FAILED(hr))
 	{
@@ -229,11 +206,13 @@ void D3D11Context::Resize(uint32_t width, uint32_t height)
 	printf("w: %d\nh: %d\n", rtvwidth, rtvheight);
 }
 
-void D3D11Context::BindRenderTargets()
+
+void D3D11Context::BindViewport()
 {
+
 	m_DeviceContext->RSSetViewports(1, &m_ViewPort);
-	m_DeviceContext->OMSetDepthStencilState(m_DepthStencilState, NULL);
-	m_DeviceContext->OMSetRenderTargets(1, &m_RenderTargetView, m_DepthStencilView);
+	//m_DeviceContext->OMSetDepthStencilState(m_DepthStencilState, NULL);
+	//m_DeviceContext->OMSetRenderTargets(1, &m_RenderTargetView, m_DepthStencilView);
 }
 
 void D3D11Context::Present()

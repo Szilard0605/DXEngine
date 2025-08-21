@@ -8,3 +8,5 @@
 #include "VertexBuffer.h"
 #include "ConstantBuffer.h"
 #include "Texture2D.h"
+#include "TextureCube.h"
+#include "RenderTarget.h"

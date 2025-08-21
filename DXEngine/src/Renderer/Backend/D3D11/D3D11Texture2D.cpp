@@ -4,6 +4,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include "D3D11TextureCube.h"
 
 D3D11Texture2D::D3D11Texture2D(std::filesystem::path path)
 {
@@ -39,15 +40,15 @@ D3D11Texture2D::D3D11Texture2D(std::filesystem::path path)
 	initData.SysMemSlicePitch = 0;
 
 	HRESULT result = D3D11Context::Get()->GetDevice()->CreateTexture2D(&desc, &initData, &m_Texture);
-
+	
 	if (FAILED(result))
 	{
-		printf("error %d: Couldn't load texture %s.\n", result, path.string().c_str());
+		printf("[D3D11Texture2D] error %d: Couldn't load texture %s.\n", result, path.string().c_str());
 	}
 
 	if (!m_Texture)
 	{
-		printf("m_texture is null\n");
+		printf("[D3D11Texture2D] m_Texture is null\n");
 	}
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
@@ -55,8 +56,9 @@ D3D11Texture2D::D3D11Texture2D(std::filesystem::path path)
 	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	srvDesc.Texture2D.MipLevels = 1;
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+
 	D3D11Context::Get()->GetDevice()->CreateShaderResourceView(m_Texture, &srvDesc, &m_TextureSRV);
-	
+
 	D3D11_SAMPLER_DESC SamplerDesc;
 	SamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	SamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -65,8 +67,29 @@ D3D11Texture2D::D3D11Texture2D(std::filesystem::path path)
 	SamplerDesc.MaxLOD = 1;
 	SamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	SamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	SamplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-	D3D11Context::Get()->GetDevice()->CreateSamplerState(&SamplerDesc, &m_SamplerState);
+	SamplerDesc.MipLODBias = 0.0f;
+	SamplerDesc.MaxAnisotropy = 0;
+	HRESULT hr = D3D11Context::Get()->GetDevice()->CreateSamplerState(&SamplerDesc, &m_SamplerState);
+
+
+	if (FAILED(hr))
+	{
+		printf("[D3D11Texture2D] Failed to create sampler state for texture %s.\n", path.string().c_str());
+		// Find exact error code
+		switch (hr)
+		{
+			case E_OUTOFMEMORY:
+				printf("Out of memory.\n");
+				break;
+			case E_INVALIDARG:
+				printf("Invalid argument.\n");
+				break;
+			default:
+				printf("Unknown error.\n");
+				break;
+		}
+	}
+	
 }
 
 void D3D11Texture2D::Bind(uint32_t binding)

@@ -35,6 +35,6 @@ SamplerState mySampler : register(s0); // Declare the sampler variable (register
 
 float4 PS_Main(VS_OUTPUT input) : SV_Target
 {
-    float4 texColor = myTexture.Sample(mySampler, input.TexCoords);
+    float4 texColor = mul(myTexture.Sample(mySampler, input.TexCoords), float4(1, 0, 0, 0));
     return texColor;
 }

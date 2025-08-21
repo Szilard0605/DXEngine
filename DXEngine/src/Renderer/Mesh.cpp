@@ -40,7 +40,7 @@ Mesh::~Mesh()
 
 }
 
-std::vector<Mesh> Mesh::ImportDynamicMesh(std::filesystem::path path)
+std::vector<SharedPtr<Mesh>> Mesh::ImportDynamicMesh(std::filesystem::path path)
 {
 
 	Assimp::Importer importer;
@@ -50,10 +50,10 @@ std::vector<Mesh> Mesh::ImportDynamicMesh(std::filesystem::path path)
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
 		std::cout << "[ASSIMP] " << std::string(importer.GetErrorString()) << "\n";
-		return std::vector<Mesh>();
+		return std::vector<SharedPtr<Mesh>>();
 	}
 
-	std::vector<Mesh> retMeshes;
+	std::vector<SharedPtr<Mesh>> retMeshes;
 
 	for (uint32_t i = 0; i < scene->mNumMeshes; i++)
 	{
@@ -111,7 +111,7 @@ std::vector<Mesh> Mesh::ImportDynamicMesh(std::filesystem::path path)
 			}
 		}
 
-		retMeshes.push_back(Mesh(Vertices, Indices, material));
+		retMeshes.push_back(MakeShared<Mesh>(Vertices, Indices, material));
 
 		std::cout << "[ASSIMP] Successfully imported mesh: " << scene->mMeshes[i]->mName.C_Str() << "\n";
 	}
