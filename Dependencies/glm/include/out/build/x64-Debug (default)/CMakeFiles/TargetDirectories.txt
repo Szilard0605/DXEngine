@@ -1,0 +1,2 @@
+C:/Users/szila/source/repos/DXEngine/Dependencies/glm/include/out/build/x64-Debug (default)/CMakeFiles/edit_cache.dir
+C:/Users/szila/source/repos/DXEngine/Dependencies/glm/include/out/build/x64-Debug (default)/CMakeFiles/rebuild_cache.dir
