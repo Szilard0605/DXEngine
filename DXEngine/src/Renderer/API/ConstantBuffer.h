@@ -8,9 +8,10 @@ class ConstantBuffer
 {
 public:
 
-	enum Type
+	enum class Type : uint8_t
 	{
-		Vertex, Pixel
+		Vertex = 0, 
+		Pixel = 1
 	};
 
 	static SharedPtr<ConstantBuffer> Create(const void* data, uint32_t size, uint32_t slot, Type type = Type::Vertex);

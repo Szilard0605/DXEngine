@@ -10,6 +10,7 @@
 #include "Camera/PerspectiveCamera.h"
 #include "Renderer/API/TextureCube.h"
 #include "Renderer/API/ConstantBuffer.h"
+#include "Image.h"
 
 class PBRRenderer
 {
@@ -22,13 +23,12 @@ public:
 
 	void Resize(uint32_t width, uint32_t height);
 	void SetSkyboxTexture(SharedPtr<TextureCube> texture) { m_SkyboxTexture = texture; }
+	SharedPtr<TextureCube> EquirectangularToCubemap(SharedPtr<Texture2D> equirectangularMap);
 
 private:
 	void GeometryPass(PerspectiveCamera& camera);
 	void SkyboxPass();
 private:
-
-	SharedPtr<RenderTarget> m_MainRenderTarget = nullptr;
 	PerspectiveCamera m_Camera;
 
 	std::vector<SharedPtr<Mesh>> m_Meshes;
@@ -58,18 +58,30 @@ private:
 		1, 5, 6,  6, 2, 1    // -Y
 	};
 
-	struct SkyboxRenderData
+	struct
 	{
 		glm::mat4 ProjectionMatrix;
 		glm::mat4 ViewMatrix;
-	} m_SkyboxRenderData;
+	} m_CameraBufferData;
 
 	SharedPtr<VertexArray> m_SkyboxVA = nullptr;
 	SharedPtr<VertexBuffer> m_SkyboxVB = nullptr;
 	SharedPtr<IndexBuffer>  m_SkyboxIB = nullptr;
 	SharedPtr<Shader> m_SkyboxShader = nullptr;
-	SharedPtr<ConstantBuffer> m_SkyboxRenderDataBuffer = nullptr;
+	SharedPtr<ConstantBuffer> m_CameraDataBuffer = nullptr;
 	SharedPtr<TextureCube> m_SkyboxTexture = nullptr;
+
+	SharedPtr<Shader> m_EquirectToCubemapShader = nullptr;
+	SharedPtr<ConstantBuffer> m_EquirectToCubeCB = nullptr;
+	SharedPtr<VertexBuffer> m_CubeVB;
+	SharedPtr<VertexArray> m_CubeVA;
+
+	struct
+	{
+		uint32_t FaceIndex = 0;
+		float padding[3];
+	} m_EquirectToCubeData;
+
 
 };
 

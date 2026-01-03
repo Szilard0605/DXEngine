@@ -21,6 +21,8 @@ public:
 	virtual void SetData(void* data, uint32_t size) override {};
 
 	ID3D11RenderTargetView* GetRenderTargetView() const { return m_RenderTargetView; }
+	ID3D11Texture2D* GetColorTexture() const { return m_ColorTexture; }
+	virtual RenderTargetDesc& GetDesc() override { return m_Desc; }
 
 private:
 	RenderTargetDesc		  m_Desc = {};

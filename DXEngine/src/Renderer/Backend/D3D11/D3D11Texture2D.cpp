@@ -13,6 +13,11 @@ D3D11Texture2D::D3D11Texture2D(const std::filesystem::path& path)
 	stbi_set_flip_vertically_on_load(true);
 	unsigned char* data = stbi_load(path.string().c_str(), &image_width, &image_height, &image_numComponents, 4);
 	
+	m_Properties.sourcePath = path;
+	m_Properties.width = image_width;
+	m_Properties.height = image_height;
+	m_Properties.mipLevels = 1;
+
 	if (!data)
 	{
 		printf("[D3D11Texture2D] Couldn't load texture %s\n", path.string().c_str());

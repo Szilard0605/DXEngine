@@ -74,3 +74,14 @@ void D3D11Renderer::DisableDepthTesting(bool disable)
 {
 	m_Context->GetDeviceContext()->OMSetDepthStencilState(disable ? m_Context->GetDepthStencilStates()[1] : m_Context->GetDepthStencilStates()[0], 0);
 }
+
+void D3D11Renderer::SetViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+{
+	D3D11_VIEWPORT vp = {};
+	vp.TopLeftX = (float)x;
+	vp.TopLeftY = (float)y;
+	vp.Width = (float)width;
+	vp.Height = (float)height;
+
+	m_Context->GetDeviceContext()->RSSetViewports(1, &vp);
+}

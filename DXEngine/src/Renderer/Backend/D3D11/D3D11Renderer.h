@@ -20,6 +20,7 @@ public:
 	virtual void BindViewport() override;
 	virtual void BindBackBuffer() override;
 	virtual void DisableDepthTesting(bool disable) override;
+	virtual void SetViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) override;
 
 private:
 	D3D11Context* m_Context;

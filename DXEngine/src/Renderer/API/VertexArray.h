@@ -11,5 +11,6 @@ class VertexArray
 		static SharedPtr<VertexArray> Create();
 
 		virtual void AddVertexBuffer(SharedPtr<VertexBuffer> vbuffer) = 0;
+		virtual void Draw(uint32_t count) = 0;
 		virtual void DrawIndexed(uint32_t count) = 0;
 };

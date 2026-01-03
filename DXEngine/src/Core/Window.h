@@ -31,12 +31,16 @@ public:
 	GLFWwindow* GetGLFWwindow() { return m_window; }
 	bool ShouldClose();
 
+	void CaptureMouse(bool capture);
+
 	void SetResizeCallback(std::function<void(int, int)> callback) { m_ResizeCallback = callback; }
-	
+	void SetMouseMoveCallback(std::function<void(double, double)> callback) { m_MouseMoveCallback = callback; }
+
 	WindowProperties GetProperties() { return m_Properties; }
 
 private:
 	std::function<void(int, int)> m_ResizeCallback;
+	std::function<void(double, double)> m_MouseMoveCallback;
 
 	GLFWwindow* m_window;
 	WindowProperties m_Properties;

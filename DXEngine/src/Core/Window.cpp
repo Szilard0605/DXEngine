@@ -43,6 +43,10 @@ Window::Window(const uint32_t width, const uint32_t height, const std::string& t
 		Application::GetInstance()->OnWindowResize(w, h);
 	});
 
+	glfwSetCursorPosCallback(m_window, [](GLFWwindow* window, double xpos, double ypos)
+	{
+		Application::GetInstance()->OnWindowMouseMove(xpos, ypos);
+	});
 }
 
 Window::~Window()
@@ -69,5 +73,11 @@ HWND Window::GetWindowHandle()
 bool Window::ShouldClose()
 {
 	return glfwWindowShouldClose(m_window);
+}
+
+void Window::CaptureMouse(bool capture)
+{
+	uint32_t mode = capture ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL;
+	glfwSetInputMode(m_window, GLFW_CURSOR, mode);
 }
 

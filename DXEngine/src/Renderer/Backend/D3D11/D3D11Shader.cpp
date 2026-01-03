@@ -64,6 +64,8 @@ D3D11Shader::~D3D11Shader()
 
 ID3DBlob* D3D11Shader::Compile(const std::string& source, const std::string& main, const std::string& target)
 {
+	printf("Compiling shader: %s, entry point: %s, target: %s\n", m_FilePath.c_str(), main.c_str(), target.c_str());
+
 	ID3DBlob* shaderBlob;
 	ID3DBlob* errorBlob;
 	HRESULT result = D3DCompile(source.c_str(), source.size(), NULL, NULL, NULL, main.c_str(), target.c_str(), D3DCOMPILE_DEBUG, 0, &shaderBlob, &errorBlob);
@@ -73,6 +75,7 @@ ID3DBlob* D3D11Shader::Compile(const std::string& source, const std::string& mai
 		{
 			printf("Couldn't compile shader source:\n");
 			printf((const char*)errorBlob->GetBufferPointer());
+			printf("\n");
 		}
 		else
 		{

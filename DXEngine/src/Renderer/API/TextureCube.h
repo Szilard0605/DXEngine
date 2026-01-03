@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Texture2D.h"
+#include "RenderTarget.h"
+
 #include "Utils/Utils.h"
 
 #include <filesystem>
@@ -28,6 +30,7 @@ class TextureCube
 {
 public:
 	static SharedPtr<TextureCube> Create(TextureCubeParameters parameters);
+	static SharedPtr<TextureCube> Create(std::vector<SharedPtr<RenderTarget>> faces);
 
 	virtual void Bind(uint32_t binding = 0) = 0;
 	virtual void SetData(void* data, uint32_t size) = 0;

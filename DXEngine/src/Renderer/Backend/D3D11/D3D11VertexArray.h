@@ -12,6 +12,7 @@ public:
 	~D3D11VertexArray();
 
 	virtual void AddVertexBuffer(SharedPtr<VertexBuffer> vbuffer) override;
+	virtual void Draw(uint32_t count) override;
 	virtual void DrawIndexed(uint32_t count) override;
 
 private:

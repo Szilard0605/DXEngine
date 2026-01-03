@@ -48,30 +48,14 @@ Application::~Application()
 void Application::Run()
 {
 	
-	PerspectiveCamera camera(60.0f, 1280.0f / 720.0f, 0.1f, 1000.0f);
-	//camera.SetFOV(60.f);
-	camera.Translate({0, 0, 0});
-	camera.UpdateView();
-
-	glm::vec3 camPos = {0, 107, 215}; 
-	glm::vec3 camRot = { 0, 0, 0};
-	float nearPlane = 0.1f;
-	float farPlane = 1000.0f;
-	float fov = 60.0f;
-	glm::vec3 rot = glm::vec3( 0.0f );
-	float rotSpeed = 0.0001f;
-	glm::vec4 color = glm::vec4(1);
-
-	glm::vec3 bgColor = glm::vec3(1.0f);
-
-	Math::Transform meshTransform;
+	m_camera = PerspectiveCamera(60.0f, 1280.0f / 720.0f, 0.1f, 1000.0f);
 
 	std::vector<SharedPtr<Mesh>> meshes = MeshImporter::ImportDynamicMesh("res/models//medieval_civilian_3/scene.gltf");
 
 	for (int i = 0; i < meshes.size(); i++)
 	{	
 		m_PBRRenderer->AddMesh(meshes[i]);
-		meshes[i]->SetTransform(meshTransform);
+		meshes[i]->SetTransform(m_MeshTransform);
 	}
 
 	SharedPtr<Texture2D> tex = Texture2D::Create("res/textures/horn-koppe_spring_4k.hdr");
@@ -84,59 +68,132 @@ void Application::Run()
 	cubeParams.faces[4] = "res/textures/skybox/front.jpg";
 	cubeParams.faces[5] = "res/textures/skybox/back.jpg";
 
-	SharedPtr<TextureCube> cubeTex = TextureCube::Create(cubeParams);
 
+	SharedPtr<Texture2D> environmentMap = Texture2D::Create("res/textures/flamingo_pan_4k.hdr");
+	SharedPtr<TextureCube> cubeTex  = m_PBRRenderer->EquirectangularToCubemap(environmentMap);
 	m_PBRRenderer->SetSkyboxTexture(cubeTex);
+
 
 	while (!m_Window->ShouldClose())
 	{
-		std::for_each(meshes.begin(), meshes.end(), [meshTransform](SharedPtr<Mesh> mesh) { mesh->SetTransform(meshTransform); });
+		std::for_each(meshes.begin(), meshes.end(), [this](SharedPtr<Mesh> mesh) { mesh->SetTransform(m_MeshTransform); });
 
 		m_Window->Update();
 
-		//m_PBRRenderer->EquirectangularToCubemap(tex);
 
-
-		m_PBRRenderer->Render(camera);
+		m_PBRRenderer->Render(m_camera);
 	
+		DrawUI();
 
-		meshTransform.Rotation.y += rotSpeed;
+		m_MeshTransform.Rotation.y += m_MeshRotationSpeed;
 
-		ImGuiCore::NewFrame();
-		ImGui::Begin("Teszt");
+		Application::GetInstance()->GetRenderer()->Clear(glm::vec4(m_BackgroundColor, 1.0f));
 
-		ImGui::DragFloat3("camPos", glm::value_ptr(camPos), 0.1f);
-		ImGui::DragFloat3("camRot", glm::value_ptr(camRot), 0.1f);
-		ImGui::DragFloat("FOV", &fov, 1.0f);
-		ImGui::DragFloat3("Mesh Translation", glm::value_ptr(meshTransform.Position), 0.1f);
-		ImGui::DragFloat3("Mesh Scale", glm::value_ptr(meshTransform.Scale), 0.1f);
-		ImGui::DragFloat3("Mesh Rotation", glm::value_ptr(meshTransform.Rotation), 0.1f);
-		ImGui::ColorEdit4("quadCol", glm::value_ptr(color), 0.1f);
-		ImGui::DragFloat("Mesh Rotation Speed", &rotSpeed, 0.0001f);
-
-		ImGui::DragFloat("Cam NearClip", &nearPlane, 0.1f);
-		ImGui::DragFloat("Cam FarClip", &farPlane, 0.1f);
-
-		ImGui::ColorEdit3("Background Color", glm::value_ptr(bgColor), 0.1f);
-
-		ImGui::End();
-		ImGuiCore::EndFrame();
-
-
-		m_Renderer->Present(); // for imgui
-
-		Application::GetInstance()->GetRenderer()->Clear(glm::vec4(bgColor, 1.0f));
-
-		camera.SetNearClip(nearPlane);
-		camera.SetFarClip(farPlane);
-		camera.Translate(camPos);
-		camera.SetFOV(fov);
-		camera.SetPitch(glm::radians(camRot.x));
-		camera.SetYaw(glm::radians(camRot.y));
+		HandleCameraMovement();
 	}
 }
 
 void Application::OnWindowResize(int width, int height)
 {
 	m_PBRRenderer->Resize(width, height);
+}
+
+void Application::OnWindowMouseMove(double xpos, double ypos)
+{
+	if(!m_MovingCamera)
+		return;
+
+	float yaw = m_camera.GetYaw();
+	float pitch = m_camera.GetPitch();
+	yaw   += (xpos - m_LastMousePos.x) * m_MouseSensitivity;
+	pitch += (ypos - m_LastMousePos.y) * m_MouseSensitivity;
+	m_LastMousePos = { (float)xpos, (float)ypos };
+
+	m_camera.SetPitch(pitch);
+	m_camera.SetYaw(yaw);
+}
+
+void Application::HandleCameraMovement()
+{
+
+	if (ImGui::IsMouseDown(1) && !m_MovingCamera)
+	{
+		m_MovingCamera = true;
+
+		m_LastMousePos = { ImGui::GetMousePos().x, ImGui::GetMousePos().y };
+
+		auto& io = ImGui::GetIO();
+		io.ConfigFlags |= ImGuiConfigFlags_NoMouse;
+		io.ConfigFlags |= ImGuiConfigFlags_NavNoCaptureKeyboard;
+
+		m_Window->CaptureMouse(true);
+
+	}
+	if (ImGui::IsKeyDown(ImGuiKey_Escape))
+	{
+		m_MovingCamera = false;
+
+		auto& io = ImGui::GetIO();
+		io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
+		io.ConfigFlags &= ~ImGuiConfigFlags_NavNoCaptureKeyboard;
+
+
+		m_Window->CaptureMouse(false);
+	}
+
+	if(!m_MovingCamera)
+		return;
+
+	if (ImGui::IsKeyDown(ImGuiKey_W))
+	{
+		m_camera.Translate(m_camera.GetPosition() + (s_CamSpeed * m_camera.GetForwardDirection()));
+	}
+	if (ImGui::IsKeyDown(ImGuiKey_S))
+	{
+		m_camera.Translate(m_camera.GetPosition() - (s_CamSpeed * m_camera.GetForwardDirection()));
+	}
+	if (ImGui::IsKeyDown(ImGuiKey_D))
+	{
+		m_camera.Translate(m_camera.GetPosition() + (s_CamSpeed * m_camera.GetRightDirection()));
+	}
+	if (ImGui::IsKeyDown(ImGuiKey_A))
+	{
+		m_camera.Translate(m_camera.GetPosition() - (s_CamSpeed * m_camera.GetRightDirection()));
+	}
+	if (ImGui::IsKeyDown(ImGuiKey_E))
+	{
+		m_camera.Translate(m_camera.GetPosition() + (s_CamSpeed * m_camera.GetUpDirection()));
+	}
+	if (ImGui::IsKeyDown(ImGuiKey_Q))
+	{
+		m_camera.Translate(m_camera.GetPosition() - (s_CamSpeed * m_camera.GetUpDirection()));
+	}
+}
+
+void Application::DrawUI()
+{
+	ImGuiCore::NewFrame();
+	ImGui::Begin("Teszt");
+
+	ImGui::DragFloat3("Mesh Translation", glm::value_ptr(m_MeshTransform.Position), 0.1f);
+	ImGui::DragFloat3("Mesh Scale", glm::value_ptr(m_MeshTransform.Scale), 0.1f);
+	ImGui::DragFloat3("Mesh Rotation", glm::value_ptr(m_MeshTransform.Rotation), 0.1f);
+	ImGui::DragFloat("Mesh Rotation Speed", &m_MeshRotationSpeed, 0.0001f);
+
+	if(ImGui::DragFloat("Cam FOV", &m_CamFOV, 0.1f))
+		m_camera.SetFOV(m_CamFOV);
+
+	if(ImGui::DragFloat("Cam NearPlane", &m_CamNearPlane, 0.1f))
+		m_camera.SetNearClip(m_CamNearPlane);
+
+	if(ImGui::DragFloat("Cam FarClip", &m_CamFarPlane, 0.1f))
+		m_camera.SetFarClip(m_CamFarPlane);
+
+	ImGui::ColorEdit3("Background Color", glm::value_ptr(m_BackgroundColor), 0.1f);
+	ImGui::DragFloat("Mouse Sensitivity", &m_MouseSensitivity, 0.0001f);
+	ImGui::DragFloat("Camera Speed", &s_CamSpeed, 0.1f);
+
+	ImGui::End();
+	ImGuiCore::EndFrame();
+	m_Renderer->Present(); // for imgui
 }

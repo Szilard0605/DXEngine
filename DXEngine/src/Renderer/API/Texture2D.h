@@ -3,7 +3,7 @@
 
 #include "Utils/Utils.h"
 
-struct Texture2DParameters
+struct Texture2DProperties
 {
 	std::filesystem::path sourcePath;
 	uint32_t width = 0;
@@ -20,4 +20,5 @@ public:
 
 	virtual void Bind(uint32_t binding = 0) = 0;
 	virtual void SetData(void* data, uint32_t size) = 0;
+	virtual Texture2DProperties GetProperties() = 0;
 };

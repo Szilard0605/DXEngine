@@ -13,21 +13,6 @@ struct RenderData
 
 PBRRenderer::PBRRenderer(uint32_t width, uint32_t height)
 {
-	RenderTargetDesc mainRenderTargetDesc;
-	mainRenderTargetDesc.width = width;
-	mainRenderTargetDesc.height = height;
-	mainRenderTargetDesc.samples = 1; // No MSAA
-	mainRenderTargetDesc.UseDepthBuffer = true; // Use depth buffer
-	mainRenderTargetDesc.Attachments = { RenderTargetType::Color, RenderTargetType::Depth};
-
-	m_MainRenderTarget = RenderTarget::Create(mainRenderTargetDesc);
-
-	if (!m_MainRenderTarget)
-	{
-		printf("Failed to create main render target\n");
-		return;
-	}
-
 	s_RenderData.CamViewProjection = glm::mat4(1.0f);
 	s_RenderData.MeshTransform = glm::mat4(1.0f);
 
@@ -43,7 +28,51 @@ PBRRenderer::PBRRenderer(uint32_t width, uint32_t height)
 	});
 	m_SkyboxVB->SetData(m_SkyboxVertices, sizeof(m_SkyboxVertices));
 	m_SkyboxVA->AddVertexBuffer(m_SkyboxVB);
-	m_SkyboxRenderDataBuffer = ConstantBuffer::Create(&m_SkyboxRenderData, sizeof(m_SkyboxRenderData), ConstantBuffer::Type::Vertex);
+	m_CameraDataBuffer = ConstantBuffer::Create(&m_CameraBufferData, sizeof(m_CameraBufferData), 0, ConstantBuffer::Type::Vertex);
+	
+	m_EquirectToCubemapShader = Shader::Create("res/shaders/EquirectToCube.hlsl");
+	m_CubeVB = VertexBuffer::Create(VertexBuffer::BufferUsage::DYNAMIC);
+	m_CubeVB->SetLayout({
+		{ ShaderDataType::Float3, "a_position" }
+	});
+
+	struct CubeVertex
+	{
+		float x, y, z;
+	};
+	static const CubeVertex cubeVertices[] =
+	{
+		// +X
+		{  1, -1, -1 }, {  1,  1, -1 }, {  1,  1,  1 },
+		{  1, -1, -1 }, {  1,  1,  1 }, {  1, -1,  1 },
+
+		// -X
+		{ -1, -1,  1 }, { -1,  1,  1 }, { -1,  1, -1 },
+		{ -1, -1,  1 }, { -1,  1, -1 }, { -1, -1, -1 },
+
+		// +Y
+		{ -1,  1, -1 }, { -1,  1,  1 }, {  1,  1,  1 },
+		{ -1,  1, -1 }, {  1,  1,  1 }, {  1,  1, -1 },
+
+		// -Y
+		{ -1, -1,  1 }, { -1, -1, -1 }, {  1, -1, -1 },
+		{ -1, -1,  1 }, {  1, -1, -1 }, {  1, -1,  1 },
+
+		// +Z
+		{ -1, -1,  1 }, {  1, -1,  1 }, {  1,  1,  1 },
+		{ -1, -1,  1 }, {  1,  1,  1 }, { -1,  1,  1 },
+
+		// -Z
+		{  1, -1, -1 }, { -1, -1, -1 }, { -1,  1, -1 },
+		{  1, -1, -1 }, { -1,  1, -1 }, {  1,  1, -1 },
+	};
+
+	m_CubeVB->SetData((void*)cubeVertices, sizeof(cubeVertices));
+	m_CubeVA = VertexArray::Create();
+	m_CubeVA->AddVertexBuffer(m_CubeVB);
+
+	m_EquirectToCubeCB = ConstantBuffer::Create(&m_EquirectToCubeData, sizeof(m_EquirectToCubeData), 0, ConstantBuffer::Type::Pixel);
+
 }
 
 void PBRRenderer::AddMesh(SharedPtr<Mesh> mesh)
@@ -96,16 +125,9 @@ void PBRRenderer::Render(PerspectiveCamera& camera)
 	camera.UpdateView();
 
 	Application::GetInstance()->GetRenderer()->BindViewport();
-
-	m_MainRenderTarget->Clear(0.0f, 0.0f, 0.0f, 1.0f); 
-	m_MainRenderTarget->ClearDepth(); 
-
-	// Geometry pass
+	Application::GetInstance()->GetRenderer()->BindBackBuffer();
 	{
-		Application::GetInstance()->GetRenderer()->BindBackBuffer();
-		Application::GetInstance()->GetRenderer()->DisableDepthTesting(true);
 		SkyboxPass();
-		Application::GetInstance()->GetRenderer()->DisableDepthTesting(false);
 		GeometryPass(camera);
 	}
 }
@@ -115,6 +137,75 @@ void PBRRenderer::Resize(uint32_t width, uint32_t height)
 	Application::GetInstance()->GetRenderer()->Resize(width, height);
 }
 
+inline int nearestPowerOfTwo(int n)
+{
+	if (n <= 0) return 1;
+	int exponent = static_cast<int>(glm::round(glm::log2(static_cast<float>(n))));
+	return 1 << exponent;
+}
+
+SharedPtr<TextureCube> PBRRenderer::EquirectangularToCubemap(SharedPtr<Texture2D> equirectangularMap)
+{
+	if (!equirectangularMap)
+		return nullptr;
+
+	std::vector<SharedPtr<RenderTarget>> RTVs(6);
+	Texture2DProperties& equirectProps = equirectangularMap->GetProperties();
+
+	// Cube face view matrices
+	glm::vec3 eye(0.0f);
+	glm::mat4 captureViews[6] =
+	{
+		glm::lookAt(eye, eye + glm::vec3(1, 0, 0), glm::vec3(0,-1, 0)), // +X
+		glm::lookAt(eye, eye + glm::vec3(-1, 0, 0), glm::vec3(0,-1, 0)), // -X
+		glm::lookAt(eye, eye + glm::vec3(0,  1, 0), glm::vec3(0, 0,  1)), // +Y
+		glm::lookAt(eye, eye + glm::vec3(0, -1, 0), glm::vec3(0, 0, -1)), // -Y
+		glm::lookAt(eye, eye + glm::vec3(0, 0,  1), glm::vec3(0,-1, 0)), // +Z
+		glm::lookAt(eye, eye + glm::vec3(0, 0, -1), glm::vec3(0,-1, 0)), // -Z
+	};
+
+	// Cube face size: max vertical resolution, nearest power of two
+	int faceSize = min(equirectProps.width / 2, equirectProps.height);
+	m_CameraBufferData.ProjectionMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+
+	// Render each face
+	for (int i = 0; i < 6; i++)
+	{
+		RenderTargetDesc rtvDesc{};
+		rtvDesc.width = faceSize;
+		rtvDesc.height = faceSize;
+		rtvDesc.Attachments.push_back(RenderTargetType::Color);
+		RTVs[i] = RenderTarget::Create(rtvDesc);
+		RTVs[i]->Clear(0.0f, 0.0f, 0.0f, 1.0f);
+	}
+	m_EquirectToCubemapShader->Bind();
+
+	Application::GetInstance()->GetRenderer()->SetViewport(0, 0, faceSize, faceSize);
+
+	// Render each face
+	for (int i = 0; i < 6; i++)
+	{
+		// 90° FOV, 1:1 aspect
+		m_CameraBufferData.ViewMatrix = captureViews[i];
+		m_CameraDataBuffer->SetData(&m_CameraBufferData, sizeof(m_CameraBufferData));
+
+		m_EquirectToCubeData.FaceIndex = i;
+		m_EquirectToCubeCB->SetData(&m_EquirectToCubeData, sizeof(m_EquirectToCubeData));
+
+		m_EquirectToCubemapShader->Bind();
+		m_CameraDataBuffer->Bind();
+		m_EquirectToCubeCB->Bind();
+		equirectangularMap->Bind(0);
+		RTVs[i]->Bind();
+		m_CubeVA->Draw(36);
+		RTVs[i]->Unbind();
+	}
+
+	Application::GetInstance()->GetRenderer()->SetViewport(0, 0, Application::GetInstance()->GetWindow()->GetProperties().width, Application::GetInstance()->GetWindow()->GetProperties().height);
+
+	return TextureCube::Create(RTVs);
+}
+
 void PBRRenderer::SkyboxPass()
 {
 	if (!m_SkyboxTexture)
@@ -122,14 +213,17 @@ void PBRRenderer::SkyboxPass()
 
 	m_SkyboxShader->Bind();
 
-	m_SkyboxRenderData.ProjectionMatrix = m_Camera.GetProjectionMatrix();
-	m_SkyboxRenderData.ViewMatrix = glm::mat4(glm::mat3(m_Camera.GetViewMatrix())); // Remove translation from the view matrix
+	m_CameraBufferData.ProjectionMatrix = m_Camera.GetProjectionMatrix();
+	m_CameraBufferData.ViewMatrix = glm::mat4(glm::mat3(m_Camera.GetViewMatrix())); // Remove translation from the view matrix
 	
 
-	m_SkyboxRenderDataBuffer->SetData(&m_SkyboxRenderData, sizeof(m_SkyboxRenderData));
+	m_CameraDataBuffer->SetData(&m_CameraBufferData, sizeof(m_CameraBufferData));
 	m_SkyboxTexture->Bind(0);
 	m_SkyboxIB->Bind();
-	m_SkyboxRenderDataBuffer->Bind();
+	m_CameraDataBuffer->Bind();
 	m_SkyboxVB->Bind();
+
+	Application::GetInstance()->GetRenderer()->DisableDepthTesting(true);
 	m_SkyboxVA->DrawIndexed(m_SkyboxIB->GetCount());
+	Application::GetInstance()->GetRenderer()->DisableDepthTesting(false);
 }

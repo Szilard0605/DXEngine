@@ -1,6 +1,7 @@
 
 #include "D3D11Context.h"
 #include "D3D11TextureCube.h"
+#include "D3D11RenderTarget.h"
 
 #include "stb_image.h"
 
@@ -84,6 +85,88 @@ D3D11TextureCube::D3D11TextureCube(TextureCubeParameters parameters)
 
 
 	D3D11Context::Get()->GetDevice()->CreateSamplerState(&SamplerDesc, &m_SamplerState);
+}
+
+D3D11TextureCube::D3D11TextureCube(std::vector<SharedPtr<RenderTarget>> faces)
+{
+
+	D3D11_TEXTURE2D_DESC desc = {};
+	desc.Width = faces[0]->GetDesc().width;
+	desc.Height = faces[0]->GetDesc().height;
+	desc.MipLevels = 1;
+	desc.ArraySize = 6;
+	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	desc.CPUAccessFlags = 0;
+	desc.SampleDesc.Count = 1;
+	desc.SampleDesc.Quality = 0;
+	desc.Usage = D3D11_USAGE_DEFAULT;
+	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	desc.CPUAccessFlags = 0;
+	desc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
+
+	uint32_t stride = 4;// GetStrideFromFormat(m_Parameters.format);
+
+	HRESULT result = D3D11Context::Get()->GetDevice()->CreateTexture2D(&desc, nullptr, &m_Texture);
+
+	for (int i = 0; i < 6; ++i)
+	{
+		D3D11RenderTarget* faceRTV = static_cast<D3D11RenderTarget*>(faces[i].get());
+		ID3D11Texture2D* srcTex = nullptr;
+		// get the underlying texture from the RTV
+		faceRTV->GetRenderTargetView()->GetResource((ID3D11Resource**)&srcTex);
+
+		D3D11_TEXTURE2D_DESC srcDesc;
+		srcTex->GetDesc(&srcDesc);
+
+		// Each cube face is a subresource: slice index = i, mip level = 0
+		UINT dstSubresource = D3D11CalcSubresource(0, i, 1);
+
+		D3D11Context::Get()->GetDeviceContext()->CopySubresourceRegion(
+			m_Texture,           // destination texture
+			dstSubresource,				// destination subresource (mip 0, face i)
+			0, 0, 0,           // destination offset
+			srcTex,            // source texture
+			0,                 // source subresource (mip 0)
+			nullptr            // copy entire source
+		);
+
+		srcTex->Release();
+	}
+
+	if (FAILED(result))
+	{
+		printf("[D3D11TextureCube] error %d: Couldn't load cube texture.\n", result);
+		return;
+	}
+
+	if (!m_Texture)
+	{
+		printf("[D3D11TextureCube] m_Texture is null\n");
+		return;
+	}
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+	ZeroMemory(&srvDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
+	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	srvDesc.Texture2D.MipLevels = 1;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+
+	D3D11Context::Get()->GetDevice()->CreateShaderResourceView(m_Texture, &srvDesc, &m_TextureSRV);
+
+	D3D11_SAMPLER_DESC SamplerDesc;
+	SamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	SamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	SamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	SamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	SamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	SamplerDesc.MinLOD = 0.0f;
+	SamplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	SamplerDesc.MipLODBias = 0.0f;
+	SamplerDesc.MaxAnisotropy = 1;
+
+
+	D3D11Context::Get()->GetDevice()->CreateSamplerState(&SamplerDesc, &m_SamplerState);
+
 }
 
 D3D11TextureCube::~D3D11TextureCube()

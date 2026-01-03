@@ -15,3 +15,15 @@ SharedPtr<TextureCube> TextureCube::Create(TextureCubeParameters parameters)
 	}
 	return nullptr;
 }
+
+SharedPtr<TextureCube> TextureCube::Create(std::vector<SharedPtr<RenderTarget>> faces)
+{
+	switch (Renderer::GetAPI())
+	{
+	case Renderer::API::D3D11:
+		return MakeShared<D3D11TextureCube>(faces);
+	default:
+		return nullptr;
+	}
+	return nullptr;
+}
