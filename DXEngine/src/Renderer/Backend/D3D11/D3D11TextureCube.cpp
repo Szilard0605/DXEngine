@@ -154,7 +154,7 @@ D3D11TextureCube::D3D11TextureCube(std::vector<SharedPtr<RenderTarget>> faces)
 	D3D11Context::Get()->GetDevice()->CreateShaderResourceView(m_Texture, &srvDesc, &m_TextureSRV);
 
 	D3D11_SAMPLER_DESC SamplerDesc;
-	SamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	SamplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
 	SamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
 	SamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
 	SamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;

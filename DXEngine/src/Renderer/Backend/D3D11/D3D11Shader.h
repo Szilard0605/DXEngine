@@ -27,6 +27,8 @@ public:
 	virtual void AddConstantBuffer(ConstantBuffer* buffer) override;
 	virtual std::vector<ConstantBuffer*> GetConstantBuffers() override { return m_ConstantBuffers; }
 
+	virtual void Recompile() override;
+
 	struct ShaderData
 	{
 		ID3D11VertexShader* m_VertexShader;

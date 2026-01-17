@@ -50,46 +50,44 @@ void Application::Run()
 	
 	m_camera = PerspectiveCamera(60.0f, 1280.0f / 720.0f, 0.1f, 1000.0f);
 
-	std::vector<SharedPtr<Mesh>> meshes = MeshImporter::ImportDynamicMesh("res/models//medieval_civilian_3/scene.gltf");
+	m_Meshes = MeshImporter::ImportDynamicMesh("res/models/stormtrooper/stormtrooper.gltf");
 
-	for (int i = 0; i < meshes.size(); i++)
+	for (int i = 0; i < m_Meshes.size(); i++)
 	{	
-		m_PBRRenderer->AddMesh(meshes[i]);
-		meshes[i]->SetTransform(m_MeshTransform);
+		m_PBRRenderer->AddMesh(m_Meshes[i]);
+		//m_Meshes[i]->SetTransform(m_MeshTransform);
 	}
 
-	SharedPtr<Texture2D> tex = Texture2D::Create("res/textures/horn-koppe_spring_4k.hdr");
-
-	TextureCubeParameters cubeParams;
-	cubeParams.faces[0] = "res/textures/skybox/right.jpg";
-	cubeParams.faces[1] = "res/textures/skybox/left.jpg";
-	cubeParams.faces[2] = "res/textures/skybox/top.jpg";
-	cubeParams.faces[3] = "res/textures/skybox/bottom.jpg";
-	cubeParams.faces[4] = "res/textures/skybox/front.jpg";
-	cubeParams.faces[5] = "res/textures/skybox/back.jpg";
+	SharedPtr<Texture2D> tex = Texture2D::Create("res/textures/flamingo_pan_4k.hdr");
 
 
-	SharedPtr<Texture2D> environmentMap = Texture2D::Create("res/textures/flamingo_pan_4k.hdr");
+	SharedPtr<Texture2D> environmentMap = Texture2D::Create("res/textures/horn-koppe_spring_4k.hdr");
 	SharedPtr<TextureCube> cubeTex  = m_PBRRenderer->EquirectangularToCubemap(environmentMap);
 	m_PBRRenderer->SetSkyboxTexture(cubeTex);
+
+	m_DirectionalLight.Direction = glm::vec3(-0.5f, -1.0f, -0.3f);
+	m_DirectionalLight.Color = glm::vec3(1.0f, 1.0f, 1.0f);
+	m_DirectionalLight.Intensity = 1.0f;
+
+	m_DeltaTime = (float)glfwGetTime();
 
 
 	while (!m_Window->ShouldClose())
 	{
-		std::for_each(meshes.begin(), meshes.end(), [this](SharedPtr<Mesh> mesh) { mesh->SetTransform(m_MeshTransform); });
+		float currentTime = (float)glfwGetTime();
+		m_DeltaTime = currentTime - m_DeltaTime;
 
 		m_Window->Update();
-
-
-		m_PBRRenderer->Render(m_camera);
 	
+
+		m_PBRRenderer->AddDirectionalLight(m_DirectionalLight);
+		m_PBRRenderer->Render(m_camera);
+
 		DrawUI();
+	
+		m_Renderer->Clear(glm::vec4(m_BackgroundColor, 1.0f));
 
-		m_MeshTransform.Rotation.y += m_MeshRotationSpeed;
-
-		Application::GetInstance()->GetRenderer()->Clear(glm::vec4(m_BackgroundColor, 1.0f));
-
-		HandleCameraMovement();
+		HandleCameraMovement(currentTime);
 	}
 }
 
@@ -113,7 +111,7 @@ void Application::OnWindowMouseMove(double xpos, double ypos)
 	m_camera.SetYaw(yaw);
 }
 
-void Application::HandleCameraMovement()
+void Application::HandleCameraMovement(float deltaTime)
 {
 
 	if (ImGui::IsMouseDown(1) && !m_MovingCamera)
@@ -146,27 +144,27 @@ void Application::HandleCameraMovement()
 
 	if (ImGui::IsKeyDown(ImGuiKey_W))
 	{
-		m_camera.Translate(m_camera.GetPosition() + (s_CamSpeed * m_camera.GetForwardDirection()));
+		m_camera.Translate(m_camera.GetPosition() + (s_CamSpeed * deltaTime * m_camera.GetForwardDirection()));
 	}
 	if (ImGui::IsKeyDown(ImGuiKey_S))
 	{
-		m_camera.Translate(m_camera.GetPosition() - (s_CamSpeed * m_camera.GetForwardDirection()));
+		m_camera.Translate(m_camera.GetPosition() - (s_CamSpeed * deltaTime * m_camera.GetForwardDirection()));
 	}
 	if (ImGui::IsKeyDown(ImGuiKey_D))
 	{
-		m_camera.Translate(m_camera.GetPosition() + (s_CamSpeed * m_camera.GetRightDirection()));
+		m_camera.Translate(m_camera.GetPosition() + (s_CamSpeed * deltaTime * m_camera.GetRightDirection()));
 	}
 	if (ImGui::IsKeyDown(ImGuiKey_A))
 	{
-		m_camera.Translate(m_camera.GetPosition() - (s_CamSpeed * m_camera.GetRightDirection()));
+		m_camera.Translate(m_camera.GetPosition() - (s_CamSpeed * deltaTime * m_camera.GetRightDirection()));
 	}
 	if (ImGui::IsKeyDown(ImGuiKey_E))
 	{
-		m_camera.Translate(m_camera.GetPosition() + (s_CamSpeed * m_camera.GetUpDirection()));
+		m_camera.Translate(m_camera.GetPosition() + (s_CamSpeed * deltaTime * m_camera.GetUpDirection()));
 	}
 	if (ImGui::IsKeyDown(ImGuiKey_Q))
 	{
-		m_camera.Translate(m_camera.GetPosition() - (s_CamSpeed * m_camera.GetUpDirection()));
+		m_camera.Translate(m_camera.GetPosition() - (s_CamSpeed * deltaTime * m_camera.GetUpDirection()));
 	}
 }
 
@@ -175,23 +173,75 @@ void Application::DrawUI()
 	ImGuiCore::NewFrame();
 	ImGui::Begin("Teszt");
 
-	ImGui::DragFloat3("Mesh Translation", glm::value_ptr(m_MeshTransform.Position), 0.1f);
-	ImGui::DragFloat3("Mesh Scale", glm::value_ptr(m_MeshTransform.Scale), 0.1f);
-	ImGui::DragFloat3("Mesh Rotation", glm::value_ptr(m_MeshTransform.Rotation), 0.1f);
-	ImGui::DragFloat("Mesh Rotation Speed", &m_MeshRotationSpeed, 0.0001f);
+	for (int i = 0; i < m_Meshes.size(); i++)
+	{
+		if (ImGui::CollapsingHeader(m_Meshes[i]->GetName().c_str()))
+		{
 
-	if(ImGui::DragFloat("Cam FOV", &m_CamFOV, 0.1f))
+			ImGui::PushID(i + m_Meshes.size());
+			if (ImGui::Button("Jump to mesh", ImVec2(100, 20)))
+			{
+				m_camera.Translate(m_Meshes[i]->GetTransform().Position + glm::vec3(0.0f, 2.0f, 5.0f));
+			}
+
+			ImGui::DragFloat3("Mesh Translation", glm::value_ptr(m_Meshes[i]->GetTransform().Position), 0.1f);
+			ImGui::DragFloat3("Mesh Scale", glm::value_ptr(m_Meshes[i]->GetTransform().Scale), 0.1f);
+			ImGui::DragFloat3("Mesh Rotation", glm::value_ptr(m_Meshes[i]->GetTransform().Rotation), 0.1f);
+			ImGui::PopID();
+		}
+		
+	}
+	ImGui::End();
+
+	ImGui::Begin("Light");
+
+	if (ImGui::DragFloat("Cam FOV", &m_CamFOV, 0.1f))
 		m_camera.SetFOV(m_CamFOV);
 
-	if(ImGui::DragFloat("Cam NearPlane", &m_CamNearPlane, 0.1f))
+	if (ImGui::DragFloat("Cam NearPlane", &m_CamNearPlane, 0.1f))
 		m_camera.SetNearClip(m_CamNearPlane);
 
-	if(ImGui::DragFloat("Cam FarClip", &m_CamFarPlane, 0.1f))
+	if (ImGui::DragFloat("Cam FarClip", &m_CamFarPlane, 0.1f))
 		m_camera.SetFarClip(m_CamFarPlane);
 
-	ImGui::ColorEdit3("Background Color", glm::value_ptr(m_BackgroundColor), 0.1f);
 	ImGui::DragFloat("Mouse Sensitivity", &m_MouseSensitivity, 0.0001f);
 	ImGui::DragFloat("Camera Speed", &s_CamSpeed, 0.1f);
+
+	float ambientIntensity = m_PBRRenderer->GetAmbientLightIntensity();
+	if (ImGui::DragFloat("Ambient Light Intensity", &ambientIntensity, 0.01f))
+		m_PBRRenderer->SetAmbientLightIntensity(ambientIntensity);
+
+	ImGui::DragFloat3("Directional Light Direction", glm::value_ptr(m_DirectionalLight.Direction), 0.1f);
+	ImGui::DragFloat3("Directional Light Color", glm::value_ptr(m_DirectionalLight.Color), 0.1f);
+	ImGui::DragFloat("Directional Light Intensity", &m_DirectionalLight.Intensity, 0.1f);
+
+
+	ImGui::End();
+
+	ImGui::Begin("Materials");
+	
+	if (ImGui::Button("Recompile shaders"))
+	{
+		for (int i = 0; i < m_Meshes.size(); i++)
+		{
+			PBRMaterial& material = m_Meshes[i]->GetMaterial();
+			material.Shader->Recompile();
+		}
+	}
+
+	for(int i = 0; i < m_Meshes.size(); i++)
+	{
+		PBRMaterial& material = m_Meshes[i]->GetMaterial();
+		std::string header = "Mesh " + std::to_string(i) + " Material";
+		ImGui::PushID(i);
+		if (ImGui::CollapsingHeader(header.c_str()))
+		{
+			ImGui::ColorEdit3("##BaseColor", glm::value_ptr(material.m_BaseColor));
+			ImGui::DragFloat("##Metallic", &material.m_Metallic, 0.01f, 0.0f, 1.0f);
+			ImGui::DragFloat("##Roughness", &material.m_Roughness, 0.01f, 0.0f, 1.0f);
+		}
+		ImGui::PopID();
+	}
 
 	ImGui::End();
 	ImGuiCore::EndFrame();

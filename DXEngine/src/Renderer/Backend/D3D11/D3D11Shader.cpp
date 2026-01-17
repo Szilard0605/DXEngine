@@ -114,3 +114,46 @@ void D3D11Shader::AddConstantBuffer(ConstantBuffer* buffer)
 {
 	m_ConstantBuffers.push_back(buffer);
 }
+
+void D3D11Shader::Recompile()
+{
+	std::ifstream stream(m_FilePath);
+	if (!stream.is_open())
+	{
+		printf("Couldn't open shader file: %s\n", m_FilePath.c_str());
+		return;
+	}
+
+	std::string line;
+	std::stringstream ss;
+
+	while (getline(stream, line))
+	{
+		ss << line << "\n";
+	}
+
+	m_Data.vsBlob = Compile(ss.str(), "VS_Main", "vs_4_0");
+	m_Data.psBlob = Compile(ss.str(), "PS_Main", "ps_4_0");
+
+	if (!m_Data.vsBlob && !m_Data.psBlob)
+	{
+		printf("Couldn't compile shaders\n");
+		return;
+	}
+
+	HRESULT result = m_Context->GetDevice()->CreateVertexShader(m_Data.vsBlob->GetBufferPointer(), m_Data.vsBlob->GetBufferSize(), NULL, &m_Data.m_VertexShader);
+	if (FAILED(result))
+	{
+		printf("Couldn't create vertex shader");
+		printf(std::system_category().message(result).c_str());
+		return;
+	}
+
+	result = m_Context->GetDevice()->CreatePixelShader(m_Data.psBlob->GetBufferPointer(), m_Data.psBlob->GetBufferSize(), NULL, &m_Data.m_PixelShader);
+	if (FAILED(result))
+	{
+		printf("Couldn't create pixel shader");
+		printf(std::system_category().message(result).c_str());
+		return;
+	}
+}

@@ -112,13 +112,15 @@ D3D11Context::D3D11Context(Window& window)
 		m_DepthStencilStates.push_back(depthStencilState);
 	}
 
+	m_DeviceContext->OMSetDepthStencilState(m_DepthStencilStates[0], 1);	
+
 	m_Device->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(&m_DebugLayer));
 	m_DebugLayer->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
 
 	// Rasterizer
 	D3D11_RASTERIZER_DESC rasterDesc = {};
 	rasterDesc.AntialiasedLineEnable = false;
-	rasterDesc.CullMode = D3D11_CULL_NONE;
+	rasterDesc.CullMode = D3D11_CULL_BACK;
 	rasterDesc.DepthBias = 0;
 	rasterDesc.DepthBiasClamp = 0.0f;
 	rasterDesc.DepthClipEnable = true;
@@ -236,8 +238,6 @@ void D3D11Context::BindViewport()
 {
 
 	m_DeviceContext->RSSetViewports(1, &m_ViewPort);
-	//m_DeviceContext->OMSetDepthStencilState(m_DepthStencilState, NULL);
-	//m_DeviceContext->OMSetRenderTargets(1, &m_RenderTargetView, m_DepthStencilView);
 }
 
 void D3D11Context::Present()

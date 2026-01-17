@@ -5,7 +5,7 @@
 
 #include "Utils/Utils.h"
 #include "Renderer/API/API.h"
-#include "Math/Transform.h"
+#include "Math/Math.h"
 
 #include "PBRMaterial.h"
 
@@ -14,9 +14,9 @@
 struct MeshVertex
 {
 	glm::vec3 Position;
-	/*glm::vec3 Normal;
+	glm::vec3 Normal;
 	glm::vec3 Tangent;
-	glm::vec3 Bitangent;*/
+	glm::vec3 Bitangent;
 	glm::vec2 TexCoords;
 };
 
@@ -34,11 +34,19 @@ public:
 	Mesh(std::vector<MeshVertex> vertices, std::vector<uint32_t> indices, PBRMaterial& material);
 	~Mesh();
 
+	void InitializeBuffers();
+
 	void SetTransform(Math::Transform transform) { m_Transform = transform; }
 	Math::Transform& GetTransform() { return m_Transform; }
 
 	PBRMaterial& GetMaterial() { return m_Material; }
 	void SetMaterial(PBRMaterial& material) { m_Material = material; }
+
+	void SetVertices(const std::vector<MeshVertex>& vertices) { m_Vertices = vertices; }
+	void SetIndices(const std::vector<uint32_t>& indices) { m_Indices = indices; }
+
+	void SetName(const std::string& name) { m_Name = name; }
+	std::string& GetName() { return m_Name; }
 
 	std::vector<MeshVertex>& GetVertices()  { return m_Vertices; }
 	std::vector<uint32_t>&	 GetIndices()   { return m_Indices;  }
@@ -49,7 +57,10 @@ public:
 	SharedPtr<ConstantBuffer> GetRenderDataBuffer() { return m_RenderDataBuffer; }
 
 private:
+
 	Math::Transform m_Transform;
+
+	std::string m_Name;
 
 	SharedPtr<VertexArray>    m_VertexArray      = nullptr;
 	SharedPtr<IndexBuffer>    m_IndexBuffer      = nullptr;

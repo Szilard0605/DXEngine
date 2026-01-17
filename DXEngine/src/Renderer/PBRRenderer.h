@@ -19,20 +19,62 @@ public:
 
 	void Render(PerspectiveCamera& camera);
 	void AddMesh(SharedPtr<Mesh> mesh);
-	void AddPointLight(PointLight pointLight, glm::vec3 position);
+	void AddPointLight(PointLight pointLight);
+	void AddDirectionalLight(DirectionalLight dirLight);
 
 	void Resize(uint32_t width, uint32_t height);
 	void SetSkyboxTexture(SharedPtr<TextureCube> texture) { m_SkyboxTexture = texture; }
 	SharedPtr<TextureCube> EquirectangularToCubemap(SharedPtr<Texture2D> equirectangularMap);
 
+	float GetAmbientLightIntensity() const { return m_AmbientLightIntensity; }
+	void SetAmbientLightIntensity(float intensity) { m_AmbientLightIntensity = intensity; }
+
 private:
 	void GeometryPass(PerspectiveCamera& camera);
 	void SkyboxPass();
 private:
+	float m_AmbientLightIntensity = 0.03f;
+
+	uint32_t m_Width, m_Height;
+	SharedPtr<Renderer> m_Renderer;
+
 	PerspectiveCamera m_Camera;
 
 	std::vector<SharedPtr<Mesh>> m_Meshes;
-	std::vector<std::pair<PointLight, glm::vec3>> m_PointLights;
+
+	std::vector<PointLight> m_PointLights;
+	std::vector<DirectionalLight> m_DirectionalLights;
+
+	struct alignas(16)
+	{
+		float AmbientLightIntensity = 0;
+		glm::vec3 DirectionalLightDirection;
+		glm::vec3 DirectionalLightColor;
+		float Padding2 = 0;
+		glm::vec3 CameraPosition;
+		float Padding3 = 0;
+
+	} m_LightBufferData;
+
+	SharedPtr<ConstantBuffer> m_LightDataBuffer = nullptr;
+
+	struct alignas(16)
+	{
+		glm::vec3 BaseColor;
+		float     Metallic;
+		float     Roughness;
+		float     Specular;
+		float     Padding;
+
+		uint32_t hasAlbedoMap = 0;
+		uint32_t hasNormalMap = 0;
+		uint32_t hasMetallicRougnessTexture = 0;
+
+		float padding1;
+		float padding2;	
+	} m_MaterialBufferData;
+
+	SharedPtr<ConstantBuffer> m_MaterialDataBuffer = nullptr;
 
 	// Skybox
 
@@ -58,7 +100,7 @@ private:
 		1, 5, 6,  6, 2, 1    // -Y
 	};
 
-	struct
+	struct alignas(16)
 	{
 		glm::mat4 ProjectionMatrix;
 		glm::mat4 ViewMatrix;

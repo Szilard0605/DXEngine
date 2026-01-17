@@ -10,11 +10,9 @@ struct PBRMaterial
 public:
 	SharedPtr<Shader> Shader = nullptr;
 
-	SharedPtr<Texture2D> m_BaseColorTexture = nullptr;
-	SharedPtr<Texture2D> m_NormalTexture    = nullptr;
-	SharedPtr<Texture2D> m_MetallicTexture  = nullptr;
-	SharedPtr<Texture2D> m_RoughnessTexture = nullptr;
-	SharedPtr<Texture2D> m_EmissiveTexture  = nullptr;
+	SharedPtr<Texture2D> BaseColorTexture = nullptr;
+	SharedPtr<Texture2D> NormalTexture    = nullptr;
+	SharedPtr<Texture2D> MetallicRoughnessTexture  = nullptr;
 
 	glm::vec3 m_BaseColor = glm::vec3 { 1.0f };
 	float m_Specular      = 0.5f;

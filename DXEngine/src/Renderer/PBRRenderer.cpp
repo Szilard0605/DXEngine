@@ -2,7 +2,7 @@
 #include "PBRRenderer.h"
 #include "Core/Application.h"
 #include "Renderer/API/Shader.h"
-#include "Math/Transform.h"
+#include "Math/Math.h"
 
 struct RenderData
 {
@@ -12,7 +12,10 @@ struct RenderData
 
 
 PBRRenderer::PBRRenderer(uint32_t width, uint32_t height)
+	: m_Width(width), m_Height(height)
 {
+	m_Renderer = Application::GetInstance()->GetRenderer();
+
 	s_RenderData.CamViewProjection = glm::mat4(1.0f);
 	s_RenderData.MeshTransform = glm::mat4(1.0f);
 
@@ -24,7 +27,7 @@ PBRRenderer::PBRRenderer(uint32_t width, uint32_t height)
 	m_SkyboxShader = Shader::Create("res/shaders/Skybox.hlsl");
 	m_SkyboxShader->Bind();
 	m_SkyboxVB->SetLayout({
-		{ ShaderDataType::Float3, "a_position" }
+		{ ShaderDataType::Float3, "a_position"  }
 	});
 	m_SkyboxVB->SetData(m_SkyboxVertices, sizeof(m_SkyboxVertices));
 	m_SkyboxVA->AddVertexBuffer(m_SkyboxVB);
@@ -72,6 +75,10 @@ PBRRenderer::PBRRenderer(uint32_t width, uint32_t height)
 	m_CubeVA->AddVertexBuffer(m_CubeVB);
 
 	m_EquirectToCubeCB = ConstantBuffer::Create(&m_EquirectToCubeData, sizeof(m_EquirectToCubeData), 0, ConstantBuffer::Type::Pixel);
+	m_CameraBufferData.ProjectionMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+
+	m_LightDataBuffer = ConstantBuffer::Create(&m_LightBufferData, sizeof(m_LightBufferData), 1, ConstantBuffer::Type::Pixel);
+	m_MaterialDataBuffer = ConstantBuffer::Create(&m_MaterialBufferData, sizeof(m_MaterialBufferData), 2, ConstantBuffer::Type::Pixel);
 
 }
 
@@ -80,9 +87,19 @@ void PBRRenderer::AddMesh(SharedPtr<Mesh> mesh)
 	m_Meshes.push_back(mesh);
 }
 
-void PBRRenderer::AddPointLight(PointLight pointLight, glm::vec3 position)
+void PBRRenderer::AddPointLight(PointLight pointLight)
 {
-	m_PointLights.push_back(std::make_pair(pointLight, position));
+	m_PointLights.push_back(pointLight);
+}
+
+void PBRRenderer::AddDirectionalLight(DirectionalLight dirLight)
+{
+	if (m_DirectionalLights.size() > 0)
+	{
+		m_DirectionalLights[0] = dirLight;
+		return;
+	}
+	m_DirectionalLights.push_back(dirLight);
 }
 
 void PBRRenderer::GeometryPass(PerspectiveCamera& camera)
@@ -96,6 +113,7 @@ void PBRRenderer::GeometryPass(PerspectiveCamera& camera)
 		SharedPtr<ConstantBuffer> renderDataBuffer = mesh->GetRenderDataBuffer();
 		SharedPtr<VertexArray> meshVA = mesh->GetVertexArray();
 		SharedPtr<IndexBuffer> meshIB = mesh->GetIndexBuffer();
+		SharedPtr<VertexBuffer> meshVB = mesh->GetVertexBuffer();
 
 		PBRMaterial& material = mesh->GetMaterial();
 
@@ -107,15 +125,54 @@ void PBRRenderer::GeometryPass(PerspectiveCamera& camera)
 		s_RenderData.CamViewProjection = camera.GetViewProjection();
 		s_RenderData.MeshTransform = model;
 
+
+		if (m_DirectionalLights.size() > 0)
+		{
+			m_LightBufferData.AmbientLightIntensity = m_DirectionalLights[0].Intensity;
+			m_LightBufferData.DirectionalLightColor = m_DirectionalLights[0].Color;
+			m_LightBufferData.DirectionalLightDirection = m_DirectionalLights[0].Direction;
+			m_LightBufferData.CameraPosition = camera.GetPosition();
+		}
+
 		material.Shader->Bind();
 
 		renderDataBuffer->SetData(&s_RenderData, sizeof(s_RenderData));
 
-		if (material.m_BaseColorTexture)
-			material.m_BaseColorTexture->Bind(0);
+		m_LightDataBuffer->SetData(&m_LightBufferData, sizeof(m_LightBufferData));
+
+		m_MaterialBufferData.BaseColor = material.m_BaseColor;
+		m_MaterialBufferData.Metallic = material.m_Metallic;
+		m_MaterialBufferData.Roughness = material.m_Roughness;
+		m_MaterialBufferData.Specular = material.m_Specular;
+
+		if (material.BaseColorTexture)
+		{
+			m_MaterialBufferData.hasAlbedoMap = 1;
+			material.BaseColorTexture->Bind(0);
+		}
+
+		if (material.NormalTexture)
+		{
+			m_MaterialBufferData.hasNormalMap = 1;
+			material.NormalTexture->Bind(1);
+		}
+
+		if (material.MetallicRoughnessTexture)
+		{
+			m_MaterialBufferData.hasMetallicRougnessTexture = 1;
+			material.MetallicRoughnessTexture->Bind(2);
+		}
+
+		if(m_SkyboxTexture)
+			m_SkyboxTexture->Bind(4);
+
+		m_MaterialDataBuffer->SetData(&m_MaterialBufferData, sizeof(m_MaterialBufferData));
 
 		renderDataBuffer->Bind();
+		m_LightDataBuffer->Bind();
+		m_MaterialDataBuffer->Bind();
 		meshIB->Bind();
+		meshVB->Bind();
 		meshVA->DrawIndexed(meshIB->GetCount());
 	}
 }
@@ -124,24 +181,18 @@ void PBRRenderer::Render(PerspectiveCamera& camera)
 {
 	camera.UpdateView();
 
-	Application::GetInstance()->GetRenderer()->BindViewport();
-	Application::GetInstance()->GetRenderer()->BindBackBuffer();
+	m_Renderer->BindViewport();
+	m_Renderer->BindBackBuffer();
 	{
 		SkyboxPass();
 		GeometryPass(camera);
 	}
+	//m_Renderer->Present();
 }
 
 void PBRRenderer::Resize(uint32_t width, uint32_t height)
 { 
-	Application::GetInstance()->GetRenderer()->Resize(width, height);
-}
-
-inline int nearestPowerOfTwo(int n)
-{
-	if (n <= 0) return 1;
-	int exponent = static_cast<int>(glm::round(glm::log2(static_cast<float>(n))));
-	return 1 << exponent;
+	m_Renderer->Resize(width, height);
 }
 
 SharedPtr<TextureCube> PBRRenderer::EquirectangularToCubemap(SharedPtr<Texture2D> equirectangularMap)
@@ -149,12 +200,12 @@ SharedPtr<TextureCube> PBRRenderer::EquirectangularToCubemap(SharedPtr<Texture2D
 	if (!equirectangularMap)
 		return nullptr;
 
-	std::vector<SharedPtr<RenderTarget>> RTVs(6);
+	static std::vector<SharedPtr<RenderTarget>> RTVs(6);
 	Texture2DProperties& equirectProps = equirectangularMap->GetProperties();
 
 	// Cube face view matrices
-	glm::vec3 eye(0.0f);
-	glm::mat4 captureViews[6] =
+	static glm::vec3 eye(0.0f);
+	static glm::mat4 captureViews[6] =
 	{
 		glm::lookAt(eye, eye + glm::vec3(1, 0, 0), glm::vec3(0,-1, 0)), // +X
 		glm::lookAt(eye, eye + glm::vec3(-1, 0, 0), glm::vec3(0,-1, 0)), // -X
@@ -164,11 +215,8 @@ SharedPtr<TextureCube> PBRRenderer::EquirectangularToCubemap(SharedPtr<Texture2D
 		glm::lookAt(eye, eye + glm::vec3(0, 0, -1), glm::vec3(0,-1, 0)), // -Z
 	};
 
-	// Cube face size: max vertical resolution, nearest power of two
-	int faceSize = min(equirectProps.width / 2, equirectProps.height);
-	m_CameraBufferData.ProjectionMatrix = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+	static int faceSize = min(equirectProps.width / 2, equirectProps.height);
 
-	// Render each face
 	for (int i = 0; i < 6; i++)
 	{
 		RenderTargetDesc rtvDesc{};
@@ -180,19 +228,16 @@ SharedPtr<TextureCube> PBRRenderer::EquirectangularToCubemap(SharedPtr<Texture2D
 	}
 	m_EquirectToCubemapShader->Bind();
 
-	Application::GetInstance()->GetRenderer()->SetViewport(0, 0, faceSize, faceSize);
+	m_Renderer->SetViewport(0, 0, faceSize, faceSize);
 
-	// Render each face
 	for (int i = 0; i < 6; i++)
 	{
-		// 90° FOV, 1:1 aspect
 		m_CameraBufferData.ViewMatrix = captureViews[i];
 		m_CameraDataBuffer->SetData(&m_CameraBufferData, sizeof(m_CameraBufferData));
 
 		m_EquirectToCubeData.FaceIndex = i;
 		m_EquirectToCubeCB->SetData(&m_EquirectToCubeData, sizeof(m_EquirectToCubeData));
 
-		m_EquirectToCubemapShader->Bind();
 		m_CameraDataBuffer->Bind();
 		m_EquirectToCubeCB->Bind();
 		equirectangularMap->Bind(0);
@@ -201,7 +246,7 @@ SharedPtr<TextureCube> PBRRenderer::EquirectangularToCubemap(SharedPtr<Texture2D
 		RTVs[i]->Unbind();
 	}
 
-	Application::GetInstance()->GetRenderer()->SetViewport(0, 0, Application::GetInstance()->GetWindow()->GetProperties().width, Application::GetInstance()->GetWindow()->GetProperties().height);
+	m_Renderer->SetViewport(0, 0, m_Width, m_Height);
 
 	return TextureCube::Create(RTVs);
 }
@@ -211,19 +256,16 @@ void PBRRenderer::SkyboxPass()
 	if (!m_SkyboxTexture)
 		return;
 
-	m_SkyboxShader->Bind();
-
 	m_CameraBufferData.ProjectionMatrix = m_Camera.GetProjectionMatrix();
 	m_CameraBufferData.ViewMatrix = glm::mat4(glm::mat3(m_Camera.GetViewMatrix())); // Remove translation from the view matrix
-	
 
+	m_SkyboxShader->Bind();
 	m_CameraDataBuffer->SetData(&m_CameraBufferData, sizeof(m_CameraBufferData));
+
 	m_SkyboxTexture->Bind(0);
 	m_SkyboxIB->Bind();
 	m_CameraDataBuffer->Bind();
 	m_SkyboxVB->Bind();
 
-	Application::GetInstance()->GetRenderer()->DisableDepthTesting(true);
 	m_SkyboxVA->DrawIndexed(m_SkyboxIB->GetCount());
-	Application::GetInstance()->GetRenderer()->DisableDepthTesting(false);
 }

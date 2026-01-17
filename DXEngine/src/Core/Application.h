@@ -12,6 +12,8 @@
 #include "Renderer/PBRRenderer.h"	
 #include "Utils/Utils.h"
 
+#include "Renderer/Light.h"
+
 class Application : public std::enable_shared_from_this<Application>
 {
 public:
@@ -29,20 +31,21 @@ public:
 
 	void OnWindowResize(int width, int height);
 	void OnWindowMouseMove(double xpos, double ypos);
-	void HandleCameraMovement();
+	void HandleCameraMovement(float deltaTime);
 	void DrawUI();
 private:
-
+	float m_DeltaTime = 0.0f;
+	std::vector<SharedPtr<Mesh>> m_Meshes;
+	DirectionalLight m_DirectionalLight;
 	Math::Transform m_MeshTransform;
 	glm::vec2 m_LastMousePos = glm::vec2(-1.0f);
 	float m_MouseSensitivity = 0.0069f;
 	bool m_MovingCamera = false;
-	float s_CamSpeed = 0.1f;
+	float s_CamSpeed = 1.301f;
 	float m_CamNearPlane = 0.1f;
-	float m_CamFarPlane = 1000.0f;
+	float m_CamFarPlane = 4000.0f;
 	float m_CamFOV = 60.0f;
 	glm::vec3 m_MeshRotation = glm::vec3(0.0f);
-	float m_MeshRotationSpeed = 0.0001f;
 	glm::vec3 m_BackgroundColor = glm::vec3(1.0f);
 	static Application* s_Instance;
 	PerspectiveCamera m_camera;

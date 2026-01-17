@@ -73,6 +73,7 @@ D3D11RenderTarget::D3D11RenderTarget(const RenderTargetDesc& desc)
 			depthDesc.ArraySize = 1;
 			depthDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
 			depthDesc.SampleDesc.Count = 1;
+			depthDesc.SampleDesc.Quality = 0;
 			depthDesc.Usage = D3D11_USAGE_DEFAULT;
 			depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
 

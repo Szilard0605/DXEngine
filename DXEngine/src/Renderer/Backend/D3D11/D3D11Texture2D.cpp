@@ -71,10 +71,10 @@ D3D11Texture2D::D3D11Texture2D(const std::filesystem::path& path)
 	SamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 	SamplerDesc.MinLOD = 0;
 	SamplerDesc.MaxLOD = 1;
-	SamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	SamplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
 	SamplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 	SamplerDesc.MipLODBias = 0.0f;
-	SamplerDesc.MaxAnisotropy = 0;
+	SamplerDesc.MaxAnisotropy = 16;
 	HRESULT hr = D3D11Context::Get()->GetDevice()->CreateSamplerState(&SamplerDesc, &m_SamplerState);
 
 

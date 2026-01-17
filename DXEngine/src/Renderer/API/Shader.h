@@ -16,5 +16,5 @@ public:
 	virtual void Unbind() = 0;
 	virtual void AddConstantBuffer(ConstantBuffer* buffer) = 0;
 	virtual std::vector<ConstantBuffer*> GetConstantBuffers() = 0;
-
+	virtual void Recompile() = 0;
 };
