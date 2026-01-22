@@ -32,8 +32,9 @@ public:
 private:
 	void GeometryPass(PerspectiveCamera& camera);
 	void SkyboxPass();
+
 private:
-	float m_AmbientLightIntensity = 0.03f;
+	float m_AmbientLightIntensity = 0.1f;
 
 	uint32_t m_Width, m_Height;
 	SharedPtr<Renderer> m_Renderer;

@@ -183,10 +183,10 @@ float4 PS_Main(VS_OUTPUT input) : SV_Target
     float3 radiance = DirectionalLightColor;
     float3 diffuse = kD * albedo / PI;
 
-    float3 color = (diffuse + specular) * radiance * NdotL;
+    float3 ambient = AmbientLightIntensity * albedo; 
+    float3 color = ambient + (diffuse + specular) * radiance * NdotL;
     
-    float3 ambient = AmbientLightIntensity * albedo; // very rough hack
-    color += ambient;
+  
     // --- Tonemap + gamma ---
     color = color / (color + 1.0);
     color = pow(color, 1.0 / 2.2);

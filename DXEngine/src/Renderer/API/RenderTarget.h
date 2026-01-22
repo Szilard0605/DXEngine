@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <vector>
 
+#include "Texture2D.h"
+
 enum class RenderTargetType
 {
 	None = 0,
@@ -20,6 +22,9 @@ struct RenderTargetDesc
 	bool UseDepthBuffer = true; // Default to using a depth buffer
 
 	std::vector<RenderTargetType> Attachments{};
+
+	TextureFormat ColorFormat = TextureFormat::RGBA8;
+	TextureFormat DepthFormat = TextureFormat::DEPTH24_STENCIL8;
 };
 
 class RenderTarget

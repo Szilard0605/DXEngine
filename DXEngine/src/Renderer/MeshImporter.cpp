@@ -150,7 +150,9 @@ std::vector<SharedPtr<Mesh>> MeshImporter::ImportDynamicMesh(std::filesystem::pa
 
 			if (texFound == AI_SUCCESS)
 			{
-				material.BaseColorTexture = Texture2D::Create(path.remove_filename().string() + texpath.C_Str());
+				Texture2DProperties props;
+				props.sourcePath = path.remove_filename().string() + texpath.C_Str();
+				material.BaseColorTexture = Texture2D::Create(props);
 				std::cout << "[ASSIMP] Found albedo texture: " << texpath.C_Str() << "\n";
 			}
 		}
@@ -162,7 +164,9 @@ std::vector<SharedPtr<Mesh>> MeshImporter::ImportDynamicMesh(std::filesystem::pa
 			aiReturn texFound = mtl->GetTexture(aiTextureType_NORMALS, 0, &texpath);
 			if (texFound == AI_SUCCESS)
 			{
-				material.NormalTexture = Texture2D::Create(path.remove_filename().string() + texpath.C_Str());
+				Texture2DProperties props;
+				props.sourcePath = path.remove_filename().string() + texpath.C_Str();
+				material.NormalTexture = Texture2D::Create(props);
 				std::cout << "[ASSIMP] Found Normal map texture: " << texpath.C_Str() << "\n";
 			}
 		}
@@ -174,7 +178,9 @@ std::vector<SharedPtr<Mesh>> MeshImporter::ImportDynamicMesh(std::filesystem::pa
 			aiReturn texFound = mtl->GetTexture(aiTextureType_UNKNOWN, 0, &texpath);
 			if (texFound == AI_SUCCESS)
 			{
-				material.MetallicRoughnessTexture = Texture2D::Create(path.remove_filename().string() + texpath.C_Str());
+				Texture2DProperties props;
+				props.sourcePath = path.remove_filename().string() + texpath.C_Str();
+				material.MetallicRoughnessTexture = Texture2D::Create(props);
 				std::cout << "[ASSIMP] Found Metallic map texture: " << texpath.C_Str() << "\n";
 			}
 		}

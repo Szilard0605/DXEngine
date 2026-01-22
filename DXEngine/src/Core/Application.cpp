@@ -50,7 +50,7 @@ void Application::Run()
 	
 	m_camera = PerspectiveCamera(60.0f, 1280.0f / 720.0f, 0.1f, 1000.0f);
 
-	m_Meshes = MeshImporter::ImportDynamicMesh("res/models/stormtrooper/stormtrooper.gltf");
+	m_Meshes = MeshImporter::ImportDynamicMesh("res/models/star_wars_r2-d2/scene.gltf");
 
 	for (int i = 0; i < m_Meshes.size(); i++)
 	{	
@@ -58,10 +58,10 @@ void Application::Run()
 		//m_Meshes[i]->SetTransform(m_MeshTransform);
 	}
 
-	SharedPtr<Texture2D> tex = Texture2D::Create("res/textures/flamingo_pan_4k.hdr");
 
-
-	SharedPtr<Texture2D> environmentMap = Texture2D::Create("res/textures/horn-koppe_spring_4k.hdr");
+	Texture2DProperties hdrProps;
+	hdrProps.sourcePath = "res/textures/horn-koppe_spring_4k.hdr";
+	SharedPtr<Texture2D> environmentMap = Texture2D::Create(hdrProps);
 	SharedPtr<TextureCube> cubeTex  = m_PBRRenderer->EquirectangularToCubemap(environmentMap);
 	m_PBRRenderer->SetSkyboxTexture(cubeTex);
 
@@ -171,7 +171,16 @@ void Application::HandleCameraMovement(float deltaTime)
 void Application::DrawUI()
 {
 	ImGuiCore::NewFrame();
-	ImGui::Begin("Teszt");
+	ImGui::Begin("Meshes");
+
+	if (ImGui::Button("Recompile shaders"))
+	{
+		for (int i = 0; i < m_Meshes.size(); i++)
+		{
+			PBRMaterial& material = m_Meshes[i]->GetMaterial();
+			material.Shader->Recompile();
+		}
+	}
 
 	for (int i = 0; i < m_Meshes.size(); i++)
 	{
@@ -187,6 +196,25 @@ void Application::DrawUI()
 			ImGui::DragFloat3("Mesh Translation", glm::value_ptr(m_Meshes[i]->GetTransform().Position), 0.1f);
 			ImGui::DragFloat3("Mesh Scale", glm::value_ptr(m_Meshes[i]->GetTransform().Scale), 0.1f);
 			ImGui::DragFloat3("Mesh Rotation", glm::value_ptr(m_Meshes[i]->GetTransform().Rotation), 0.1f);
+			ImGui::PopID();
+
+			ImGui::Separator();
+
+			PBRMaterial& material = m_Meshes[i]->GetMaterial();
+			std::string header = "Mesh " + std::to_string(i) + " Material";
+			ImGui::PushID(i);
+			if (ImGui::CollapsingHeader(header.c_str()))
+			{
+				ImGui::Image(material.BaseColorTexture ? (void*)material.MetallicRoughnessTexture->GetRendererID() : nullptr, ImVec2(64, 64));
+				ImGui::ColorEdit3("BaseColor", glm::value_ptr(material.m_BaseColor));
+				ImGui::DragFloat("Metallic", &material.m_Metallic, 0.01f, 0.0f, 1.0f);
+				ImGui::DragFloat("Roughness", &material.m_Roughness, 0.01f, 0.0f, 1.0f);
+				ImGui::Image(material.MetallicRoughnessTexture ? (void*)material.BaseColorTexture->GetRendererID() : nullptr, ImVec2(64, 64));
+
+				ImGui::Image(material.NormalTexture ? (void*)material.NormalTexture->GetRendererID() : nullptr, ImVec2(64, 64));
+				
+				
+			}
 			ImGui::PopID();
 		}
 		
@@ -218,32 +246,6 @@ void Application::DrawUI()
 
 	ImGui::End();
 
-	ImGui::Begin("Materials");
-	
-	if (ImGui::Button("Recompile shaders"))
-	{
-		for (int i = 0; i < m_Meshes.size(); i++)
-		{
-			PBRMaterial& material = m_Meshes[i]->GetMaterial();
-			material.Shader->Recompile();
-		}
-	}
-
-	for(int i = 0; i < m_Meshes.size(); i++)
-	{
-		PBRMaterial& material = m_Meshes[i]->GetMaterial();
-		std::string header = "Mesh " + std::to_string(i) + " Material";
-		ImGui::PushID(i);
-		if (ImGui::CollapsingHeader(header.c_str()))
-		{
-			ImGui::ColorEdit3("##BaseColor", glm::value_ptr(material.m_BaseColor));
-			ImGui::DragFloat("##Metallic", &material.m_Metallic, 0.01f, 0.0f, 1.0f);
-			ImGui::DragFloat("##Roughness", &material.m_Roughness, 0.01f, 0.0f, 1.0f);
-		}
-		ImGui::PopID();
-	}
-
-	ImGui::End();
 	ImGuiCore::EndFrame();
 	m_Renderer->Present(); // for imgui
 }

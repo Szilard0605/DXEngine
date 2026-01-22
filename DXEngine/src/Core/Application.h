@@ -41,7 +41,7 @@ private:
 	glm::vec2 m_LastMousePos = glm::vec2(-1.0f);
 	float m_MouseSensitivity = 0.0069f;
 	bool m_MovingCamera = false;
-	float s_CamSpeed = 1.301f;
+	float s_CamSpeed = 0.1f;
 	float m_CamNearPlane = 0.1f;
 	float m_CamFarPlane = 4000.0f;
 	float m_CamFOV = 60.0f;

@@ -126,9 +126,10 @@ void PBRRenderer::GeometryPass(PerspectiveCamera& camera)
 		s_RenderData.MeshTransform = model;
 
 
+		m_LightBufferData.AmbientLightIntensity = m_AmbientLightIntensity;
+
 		if (m_DirectionalLights.size() > 0)
 		{
-			m_LightBufferData.AmbientLightIntensity = m_DirectionalLights[0].Intensity;
 			m_LightBufferData.DirectionalLightColor = m_DirectionalLights[0].Color;
 			m_LightBufferData.DirectionalLightDirection = m_DirectionalLights[0].Direction;
 			m_LightBufferData.CameraPosition = camera.GetPosition();

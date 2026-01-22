@@ -2,6 +2,8 @@
 
 #include "D3D11Context.h"
 
+#include "D3D11Texture2D.h"
+
 D3D11RenderTarget::D3D11RenderTarget(const RenderTargetDesc& desc)
 	: m_Desc(desc)
 {
@@ -21,7 +23,7 @@ D3D11RenderTarget::D3D11RenderTarget(const RenderTargetDesc& desc)
 			textureDesc.Height = desc.height;          // must be > 0
 			textureDesc.MipLevels = 1;
 			textureDesc.ArraySize = 1;
-			textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			textureDesc.Format = D3D11Texture2D::GetDXGIFormat(desc.ColorFormat);
 			textureDesc.SampleDesc.Count = 1;
 			textureDesc.SampleDesc.Quality = 0;
 			textureDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -71,7 +73,7 @@ D3D11RenderTarget::D3D11RenderTarget(const RenderTargetDesc& desc)
 			depthDesc.Height = desc.height;
 			depthDesc.MipLevels = 1;
 			depthDesc.ArraySize = 1;
-			depthDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
+			depthDesc.Format = D3D11Texture2D::GetDXGIFormat(desc.DepthFormat);;
 			depthDesc.SampleDesc.Count = 1;
 			depthDesc.SampleDesc.Quality = 0;
 			depthDesc.Usage = D3D11_USAGE_DEFAULT;
