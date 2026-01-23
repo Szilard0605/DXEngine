@@ -105,8 +105,7 @@ float DistributionGGX(float3 N, float3 H, float roughness)
 
 float GeometrySchlickGGX(float NdotV, float roughness)
 {
-    float r = roughness + 1.0;
-    float k = (r * r) / 8.0;
+    float k = (roughness + 1.0) * (roughness + 1.0) / 8.0;
     return NdotV / (NdotV * (1.0 - k) + k);
 }
 
@@ -168,7 +167,7 @@ float4 PS_Main(VS_OUTPUT input) : SV_Target
     float3 F0 = lerp(float3(0.04, 0.04, 0.04), albedo, metallic);
     float D = DistributionGGX(N, H, roughness);
     float G = GeometrySmith(N, V, L, roughness);
-    float3 F = FresnelSchlick(saturate(dot(H, V)), F0);
+    float3 F = FresnelSchlick(saturate(dot(H, L)), F0);
 
     float clampNdotV = max(dot(N, V), 0.001);
     float clampNdotL = max(dot(N, L), 0.001);
