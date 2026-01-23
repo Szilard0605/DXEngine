@@ -50,7 +50,7 @@ void Application::Run()
 	
 	m_camera = PerspectiveCamera(60.0f, 1280.0f / 720.0f, 0.1f, 1000.0f);
 
-	m_Meshes = MeshImporter::ImportDynamicMesh("res/models/star_wars_r2-d2/scene.gltf");
+	m_Meshes = MeshImporter::ImportDynamicMesh("res/models/medieval_civilian_3/scene.gltf");
 
 	for (int i = 0; i < m_Meshes.size(); i++)
 	{	
@@ -205,11 +205,11 @@ void Application::DrawUI()
 			ImGui::PushID(i);
 			if (ImGui::CollapsingHeader(header.c_str()))
 			{
-				ImGui::Image(material.BaseColorTexture ? (void*)material.MetallicRoughnessTexture->GetRendererID() : nullptr, ImVec2(64, 64));
+				ImGui::Image(material.BaseColorTexture ? (void*)material.BaseColorTexture->GetRendererID() : nullptr, ImVec2(64, 64));
 				ImGui::ColorEdit3("BaseColor", glm::value_ptr(material.m_BaseColor));
 				ImGui::DragFloat("Metallic", &material.m_Metallic, 0.01f, 0.0f, 1.0f);
 				ImGui::DragFloat("Roughness", &material.m_Roughness, 0.01f, 0.0f, 1.0f);
-				ImGui::Image(material.MetallicRoughnessTexture ? (void*)material.BaseColorTexture->GetRendererID() : nullptr, ImVec2(64, 64));
+				ImGui::Image(material.MetallicRoughnessTexture ? (void*)material.MetallicRoughnessTexture->GetRendererID() : nullptr, ImVec2(64, 64));
 
 				ImGui::Image(material.NormalTexture ? (void*)material.NormalTexture->GetRendererID() : nullptr, ImVec2(64, 64));
 				
