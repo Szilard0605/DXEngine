@@ -29,7 +29,7 @@ D3D11Texture2D::D3D11Texture2D(Texture2DProperties& properties)
 	desc.Height = image_height;
 	desc.MipLevels = 1;
 	desc.SampleDesc.Count = 1;
-	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	desc.Format = GetDXGIFormat(properties.format);
 	desc.Usage = D3D11_USAGE_DYNAMIC;
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 	desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;

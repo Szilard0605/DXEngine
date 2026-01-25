@@ -41,6 +41,7 @@ public:
 	virtual void SetViewport(uint32_t x, uint32_t y, uint32_t width, uint32_t height) = 0;
 	virtual void SetData(void* data, uint32_t size) = 0;
 
-
+	virtual void BindColorTexture(uint32_t slot = 0) = 0;
+	virtual void BindDepthTexture(uint32_t slot = 0) = 0;
 };
 

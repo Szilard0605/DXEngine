@@ -39,7 +39,7 @@ D3D11RenderTarget::D3D11RenderTarget(const RenderTargetDesc& desc)
 			}
 
 			D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
-			rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			rtvDesc.Format = D3D11Texture2D::GetDXGIFormat(desc.ColorFormat);
 			rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 
 			hr = D3D11Context::Get()->GetDevice()->CreateRenderTargetView(m_ColorTexture, &rtvDesc, &m_RenderTargetView);
@@ -51,7 +51,7 @@ D3D11RenderTarget::D3D11RenderTarget(const RenderTargetDesc& desc)
 
 			D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
 			ZeroMemory(&srvDesc, sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
-			srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			srvDesc.Format = D3D11Texture2D::GetDXGIFormat(desc.ColorFormat);;
 			srvDesc.Texture2D.MipLevels = 1;
 			srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 
@@ -196,7 +196,20 @@ void D3D11RenderTarget::SetViewport(uint32_t x, uint32_t y, uint32_t width, uint
 	context->RSSetViewports(1, &viewport);
 }
 
-/*void D3D11RenderTarget::RenderTargetDescToD3D11Desc(const RenderTargetDesc& desc, D3D11_TEXTURE2D_DESC& d3d11Desc)
+void D3D11RenderTarget::BindColorTexture(uint32_t slot)
 {
+	ID3D11DeviceContext* context = D3D11Context::Get()->GetDeviceContext();
+	if (m_ColorTextureSRV)
+	{
+		context->PSSetShaderResources(slot, 1, &m_ColorTextureSRV);
+	}
+}
 
-}*/
+void D3D11RenderTarget::BindDepthTexture(uint32_t slot)
+{
+	ID3D11DeviceContext* context = D3D11Context::Get()->GetDeviceContext();
+	if (m_DepthTextureSRV)
+	{
+		context->PSSetShaderResources(slot, 1, &m_DepthTextureSRV);
+	}
+}
